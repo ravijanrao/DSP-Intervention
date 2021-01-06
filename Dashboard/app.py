@@ -17,35 +17,8 @@ import plotly.express as px
 import plotly.graph_objects as go 
 from plotly.subplots import make_subplots
 
-# get relative data folder
-PATH = pathlib.Path.cwd().parent
-DATA_PATH = PATH.joinpath("Raw Data")
-
-####################################################################################
-################################### DATA PREPARATION ###############################
-####################################################################################
-
-### prepare afghanistan socioeconomic data ###
-raw_se_data_path = DATA_PATH.joinpath("AFG_IRQ_LKA_SOM_dataset.xlsx")
-raw_se_df = pd.read_excel(raw_se_data_path)
-afg_se_df = raw_se_df[raw_se_df.Country == 'AFG']
-
-### prepare afghanistan conflict data ###
-afg_conflict_path = DATA_PATH.joinpath('Conflict_Pickles/12- Afghanistan 2003-2014')
-afg_conflict_df = pd.read_pickle(afg_conflict_path)
-
-# monthly fatalities, best guess, marker size
-monthly_cas_df = afg_conflict_df.copy()
-monthly_cas_df['Month'] = monthly_cas_df['date_start'].astype('datetime64[ns]') # create datetime object
-monthly_cas_df['events'] = 1
-#Groupby month
-monthly_cas_df = monthly_cas_df.groupby([pd.Grouper(key='Month', freq='M')]).agg({'best':'sum', 'events':'sum'}).reset_index()
-monthly_cas_df['marker_size'] = monthly_cas_df['best'] / 10
-monthly_cas_df.rename({'best': 'casualties'})
-
-#############################################################################
-################################### DASHBOARD ###############################
-#############################################################################
+# import variables from separate data processing file
+from data_preparation import afg_se_df, afg_conflict_df, monthly_cas_df
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -147,7 +120,7 @@ def update_conflict_graph(chart_type, yaxis_type):
                         hover_name = 'Month', # formatting becomes weird for the heading!
                         hover_data = {
                             'marker_size': False,
-                            'best': True
+                            'casualties': True #tried to rename this to 
                         })
         
         fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest',
