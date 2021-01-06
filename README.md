@@ -1,3 +1,3 @@
 # DSP-Intervention
 
-A Humanitarian Military Intervention Analysis and Dashboard Prokect
+A Humanitarian Military Intervention Analysis and Dashboard Project
