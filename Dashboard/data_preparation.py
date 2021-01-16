@@ -39,4 +39,19 @@ monthly_cas_df = monthly_cas_df.groupby([pd.Grouper(key='Month', freq='M')]).agg
 monthly_cas_df['marker_size'] = monthly_cas_df['best'] / 10
 monthly_cas_df.rename({'best': 'casualties'}, axis=1, inplace=True)
 
-print(monthly_cas_df.head(1))
+def create_monthly_casualties_df(conflict_df, marker_size_scaling):
+    """
+    Accepts a conflict dataframe, returns a dataframe with the monthly casualties and number of events
+    The marker_size_scaling parameter is used to scale the size of the 'marker_size' column for eventual plotting
+    """
+    monthly_cas_df = conflict_df
+    monthly_cas_df['Month'] = monthly_cas_df['date_start'].astype('datetime64[ns]') # create datetime object
+    monthly_cas_df['events'] = 1
+
+    #Groupby month
+    monthly_cas_df = monthly_cas_df.groupby([pd.Grouper(key='Month', freq='M')]).agg({'best':'sum', 'events':'sum'}).reset_index()
+    monthly_cas_df['marker_size'] = monthly_cas_df['best'] / marker_size_scaling
+    monthly_cas_df.rename({'best': 'casualties'}, axis=1, inplace=True)
+
+    return monthly_cas_df
+
