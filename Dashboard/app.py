@@ -19,7 +19,7 @@ from plotly.subplots import make_subplots
 from scipy.cluster.hierarchy import fcluster
 
 # import variables from separate data processing file
-from data_preparation import get_country_df, get_linkage_matrix, generate_conflict_dict
+from data_preparation import generate_conflict_dict
 
 conflict_dict = generate_conflict_dict()
 

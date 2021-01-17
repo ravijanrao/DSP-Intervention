@@ -8,90 +8,6 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 
-
-
-# Return all data pertaining to a country function:
-# needs to be extended for thijs' analysis! Also with the data from allard/naomi? i.e. neighbours data
-
-def get_country_df(country_name):
-
-    PATH = pathlib.Path.cwd()
-    DATA_PATH = PATH.joinpath("Raw Data")
-
-    """
-    Return the dataframes used to analyse the country, retrieved from pickles contained in the relevant folders
-    Input is a country name, with the choice of ['Afghanistan', 'Iraq', 'Somalia', 'Sri Lanka']
-    FOUR different dataframes returned: the conflict df, the monthly casualties_df, the hmi df, and the socioeconomic factor df
-    """
-
-    country_code_dict = {
-        'Afghanistan': 'AFG',
-        'Iraq': 'IRQ',
-        'Somalia': 'SOM',
-        'Sri Lanka': 'LKA'
-    }
-
-    country = country_code_dict[country_name] # select the country code of the input country
-
-    # Grab the full conflict df
-    country_path_dict = {
-        'AFG': 'Conflict_Pickles/12- Afghanistan 2003-2014',
-        'IRQ': 'Conflict_Pickles/0- Iraq 2014-',
-        'LKA': 'Conflict_Pickles/35- Sri Lanka 1987-1990',
-        'SOM': 'Conflict_Pickles/9- Somalia 2007-'
-    }
-
-    conflict_df_path = DATA_PATH.joinpath(country_path_dict[country]) # specify the filepath of the conflict df
-    conflict_df = pd.read_pickle(conflict_df_path)
-
-    # Grab the monthly casualties df (could also generate this directly with a function?)
-    monthly_casualties_df_path = DATA_PATH.joinpath('Monthly_Casualty_Pickles').joinpath(country + '_mc_df')
-    monthly_casualties_df = pd.read_pickle(monthly_casualties_df_path)
-
-    # Grab the HMI df (could also generate this directly with a function?)
-    hmi_df_path = DATA_PATH.joinpath('HMI_Pickles').joinpath(country + '_hmi_df')
-    hmi_df = pd.read_pickle(hmi_df_path)
-
-    # Grab the socioeconomic factor df (could also generate this directly with a function?)
-    se_df_path = DATA_PATH.joinpath('Socioeconomic_Pickles').joinpath(country + '_se_df')
-    se_df = pd.read_pickle(se_df_path)
-
-    return conflict_df, monthly_casualties_df, hmi_df, se_df
-
-# Here we grab/generate a linkage matrix every time we change settings
-# the other option would be to grab all 5 linkage matrices for the country in the function above
-def get_linkage_matrix(country_name, setting):
-    """
-    Grab the relevant linkage matrix for a country, based on the selected setting (1-5 currently)
-    """
-    PATH = pathlib.Path.cwd()
-
-    setting_dict = {
-        '1': '_pure_spatial.npy',
-        '2': '_high_spatial_low_temporal.npy',
-        '3': '_med_spatial_med_temporal.npy',
-        '4': '_low_spatial_high_temporal.npy',
-        '5': '_pure_temporal.npy',
-    }
-
-    setting = str(setting)
-
-    country_code_dict = {
-        'Afghanistan': 'AFG',
-        'Iraq': 'IRQ',
-        'Somalia': 'SOM',
-        'Sri Lanka': 'LKA'
-    }
-
-    country_code = country_code_dict[country_name]
-    
-    linkage_path = PATH.joinpath('Linkage_Matrices').joinpath(country_code) # relevant linkage matrix folder
-    linkage_matrix_path = linkage_path.joinpath(country_code + setting_dict[setting]) # grab the relevant linkage matrix path
-    linkage_matrix = np.load(linkage_matrix_path)
-
-    return linkage_matrix
-
-
 # generate entire dict
 def generate_conflict_dict():
     """
@@ -155,7 +71,7 @@ def generate_conflict_dict():
 
 
 
-# define all of the methods used to create the pickles
+# define all of the methods used to create the pickles?
 # Do we also define the methods used to generate the conflict pickles from UCDP GED? Since we can't upload GED to github due to github 100mb filesize limit
 # Is this necessary?
 
