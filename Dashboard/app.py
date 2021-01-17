@@ -19,7 +19,9 @@ from plotly.subplots import make_subplots
 from scipy.cluster.hierarchy import fcluster
 
 # import variables from separate data processing file
-from data_preparation import get_country_df, get_linkage_matrix
+from data_preparation import get_country_df, get_linkage_matrix, generate_conflict_dict
+
+conflict_dict = generate_conflict_dict()
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -28,23 +30,33 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 ### This is not optimal! See https://dash.plotly.com/sharing-data-between-callbacks ###
     # solution would be to pre-load all of the data for all countries here, and store it in some kind of nested dictionary
 # start with afghanistan as default option
-global conflict_df, monthly_casualties_df, hmi_df, se_df
-conflict_df, monthly_casualties_df, hmi_df, se_df= get_country_df('Afghanistan')
+# global conflict_df, monthly_casualties_df, hmi_df, se_df
+# conflict_df, monthly_casualties_df, hmi_df, se_df= get_country_df('Afghanistan')
     # global approach won't work anyway..
  # could instead potentially use some kind of a for loop, and our pre-made function anyway!
 
+conflict_df = conflict_dict['AFG']['conflict_df']
 
 # define country dropdown menu items
 available_countries = ['Afghanistan', 'Iraq', 'Somalia', 'Sri Lanka']
+# dict to convert from country name to country code
+country_code_dict = {
+    'Afghanistan': 'AFG',
+    'Iraq': 'IRQ',
+    'Somalia': 'SOM',
+    'Sri Lanka': 'LKA'
+}
 
 # define conflict dropdown menu items
 available_charts = ['Event severity over time dot plot', 'Monthly fatalities scatter plot']
 
 #selectable socioeconomic parameters
-available_indicators = se_df.columns[2:] 
+# available_indicators = se_df.columns[2:] 
+available_indicators = conflict_dict['AFG']['se_df'].columns[2:]
 
 # import the linkage matrix
-linkage_matrix = get_linkage_matrix('Afghanistan', 3)
+# linkage_matrix = get_linkage_matrix('Afghanistan', 3)
+# linkage_matrix = conflict_dict['AFG']['linkage']['3']
 
 app.layout = html.Div([
     
@@ -156,13 +168,16 @@ app.layout = html.Div([
 #### Standard conflict charts ####
 @app.callback(
     Output('selected-chart', 'figure'),
+    Input('country-name', 'value'),
     Input('chart-type', 'value'),
     Input('yaxis-type', 'value')
 )
-def update_conflict_graph(chart_type, yaxis_type):
+def update_conflict_graph(country_name, chart_type, yaxis_type):
     # create the bubble plot
+    country = country_code_dict[country_name]
     if(chart_type == available_charts[0]):
-        fig = px.scatter(monthly_casualties_df, x = 'Month', y = 'events', size = 'marker_size',
+        fig = px.scatter(conflict_dict[country]['monthly_casualties_df'], x = 'Month', y = 'events', size = 'marker_size',
+        # fig = px.scatter(monthly_casualties_df, x = 'Month', y = 'events', size = 'marker_size',
                         hover_name = 'Month', # formatting becomes weird for the heading!
                         hover_data = {
                             'marker_size': False,
@@ -178,7 +193,7 @@ def update_conflict_graph(chart_type, yaxis_type):
         return fig
     
     else:
-        fig = px.scatter(monthly_casualties_df, x = 'Month', y = 'casualties')
+        fig = px.scatter(conflict_dict[country]['monthly_casualties_df'], x = 'Month', y = 'casualties')
         
         fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest',
                          transition_duration=500)
@@ -189,14 +204,17 @@ def update_conflict_graph(chart_type, yaxis_type):
         return fig
 
 #### 3d chart ####
+#### NEEDS TO BE UPDATED TO ALLOW FOR CHANGE OF SETTING! #####
 @app.callback(
      Output('3d-scatter-plot', 'figure'),
+     Input('country-name', 'value'),
      Input('cluster-size-slider', 'value')
 )
-def update_3d_graph(cutoff_value):
-    
+def update_3d_graph(country_name, cutoff_value):
+    country = country_code_dict[country_name]
     # Drop cols & create date instances
-    df_clean = conflict_df[['date_start', 'best', 'latitude', 'longitude']].copy()
+    df_clean = conflict_dict[country]['conflict_df']
+    df_clean = df_clean[['date_start', 'best', 'latitude', 'longitude']]
     df_clean['date'] = pd.to_datetime(df_clean['date_start'])
 
     # Calculate days from earliest event for faster comparison
@@ -209,6 +227,8 @@ def update_3d_graph(cutoff_value):
     df_clean = df_clean[['best', 'lat', 'lon', 'days_from_earliest']]
     df_clean['side_a'] = conflict_df.side_a
     df_clean['side_b'] = conflict_df.side_b
+
+    linkage_matrix = conflict_dict[country]['linkage']['3']
 
     df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
 
@@ -231,15 +251,19 @@ def update_3d_graph(cutoff_value):
 
 @app.callback(
     Output('indicator-chart', 'figure'),
+    Input('country-name', 'value'),
     Input('primary-yaxis', 'value'),
     Input('secondary-yaxis', 'value'),
     Input('indicator-range', 'value')
 )
-def update_se_graph_variables(primary_yaxis, secondary_yaxis, indicator_range):
+def update_se_graph_variables(country_name, primary_yaxis, secondary_yaxis, indicator_range):
     
+    country = country_code_dict[country_name]
+
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # dataframe limited to the year range
+    se_df = conflict_dict[country]['se_df']
     dff = se_df[(se_df.Year >= indicator_range[0]) & (se_df.Year <= indicator_range[1])]
     
     fig.add_trace(

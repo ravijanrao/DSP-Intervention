@@ -92,8 +92,66 @@ def get_linkage_matrix(country_name, setting):
     return linkage_matrix
 
 
+# generate entire dict
+def generate_conflict_dict():
+    """
+    Function to create a complete dict containing all of the data and dataframes for each country
+    """
 
+    PATH = pathlib.Path.cwd()
+    DATA_PATH = PATH.joinpath("Raw Data")
 
+    countries_list = ['AFG', 'IRQ', 'LKA', 'SOM']
+
+    conflict_dict = {}
+
+    for country in countries_list:
+
+        conflict_dict[country] = {}
+
+        # Conflict df
+        country_path_dict = {
+            'AFG': 'Conflict_Pickles/12- Afghanistan 2003-2014',
+            'IRQ': 'Conflict_Pickles/0- Iraq 2014-',
+            'LKA': 'Conflict_Pickles/35- Sri Lanka 1987-1990',
+            'SOM': 'Conflict_Pickles/9- Somalia 2007-'
+        }
+        conflict_df_path = DATA_PATH.joinpath(country_path_dict[country]) # specify the filepath of the conflict df
+        conflict_df = pd.read_pickle(conflict_df_path)
+        conflict_dict[country]['conflict_df'] = conflict_df
+
+        # Monthly casualties df
+        monthly_casualties_df_path = DATA_PATH.joinpath('Monthly_Casualty_Pickles').joinpath(country + '_mc_df')
+        monthly_casualties_df = pd.read_pickle(monthly_casualties_df_path)
+        conflict_dict[country]['monthly_casualties_df'] = monthly_casualties_df
+
+        # HMI df
+        hmi_df_path = DATA_PATH.joinpath('HMI_Pickles').joinpath(country + '_hmi_df')
+        hmi_df = pd.read_pickle(hmi_df_path)
+        conflict_dict[country]['hmi_df'] = hmi_df
+
+        # Socioeconomic df
+        se_df_path = DATA_PATH.joinpath('Socioeconomic_Pickles').joinpath(country + '_se_df')
+        se_df = pd.read_pickle(se_df_path)
+        conflict_dict[country]['se_df'] = se_df
+
+        # Linkage matrices
+        linkage_path = PATH.joinpath('Linkage_Matrices').joinpath(country) # relevant linkage matrix folder
+
+        setting_dict = {
+            '1': '_pure_spatial.npy',
+            '2': '_high_spatial_low_temporal.npy',
+            '3': '_med_spatial_med_temporal.npy',
+            '4': '_low_spatial_high_temporal.npy',
+            '5': '_pure_temporal.npy',
+        }
+
+        conflict_dict[country]['linkage'] = {}
+        for i in range(1,6):
+            linkage_matrix_path = linkage_path.joinpath(country + setting_dict[str(i)]) # path to the relevant linkage matrix
+            conflict_dict[country]['linkage'][str(i)] = np.load(linkage_matrix_path)
+
+    return conflict_dict
 
 
 
