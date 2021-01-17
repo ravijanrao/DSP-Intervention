@@ -3,58 +3,106 @@ import pickle
 import copy
 import pathlib
 import urllib.request
-import dash
-from jupyter_dash import JupyterDash
 import math
 import datetime as dt
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.transforms as transforms
-from dash.dependencies import Input, Output, State, ClientsideFunction
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.express as px
-import plotly.graph_objects as go 
-from plotly.subplots import make_subplots
-
-# get relative data folder
-PATH = pathlib.Path.cwd().parent
-DATA_PATH = PATH.joinpath("Raw Data")
-
-### prepare afghanistan socioeconomic data ###
-raw_se_data_path = DATA_PATH.joinpath("AFG_IRQ_LKA_SOM_dataset.xlsx")
-raw_se_df = pd.read_excel(raw_se_data_path)
-afg_se_df = raw_se_df[raw_se_df.Country == 'AFG']
-
-### prepare afghanistan conflict data ###
-afg_conflict_path = DATA_PATH.joinpath('Conflict_Pickles/12- Afghanistan 2003-2014')
-afg_conflict_df = pd.read_pickle(afg_conflict_path)
-
-# monthly fatalities, best guess, marker size
-monthly_cas_df = afg_conflict_df.copy()
-monthly_cas_df['Month'] = monthly_cas_df['date_start'].astype('datetime64[ns]') # create datetime object
-monthly_cas_df['events'] = 1
-#Groupby month
-monthly_cas_df = monthly_cas_df.groupby([pd.Grouper(key='Month', freq='M')]).agg({'best':'sum', 'events':'sum'}).reset_index()
-monthly_cas_df['marker_size'] = monthly_cas_df['best'] / 10
-monthly_cas_df.rename({'best': 'casualties'}, axis=1, inplace=True)
+import numpy as np
 
 
 
 # Return all data pertaining to a country function:
-# needs to be extended for thijs' analysis! Also with the data from allard/naomi? i.e. neighbours
-country_code_dict = {
-    'Afghanistan': 'AFG',
-    'Iraq': 'IRQ',
-    'Somalia': 'SOM',
-    'Sri Lanka': 'LKA'
-}
+# needs to be extended for thijs' analysis! Also with the data from allard/naomi? i.e. neighbours data
+
+def get_country_df(country_name):
+
+    PATH = pathlib.Path.cwd().parent
+    DATA_PATH = PATH.joinpath("Raw Data")
+
+    """
+    Return the dataframes used to analyse the country, retrieved from pickles contained in the relevant folders
+    Input is a country name, with the choice of ['Afghanistan', 'Iraq', 'Somalia', 'Sri Lanka']
+    FOUR different dataframes returned: the conflict df, the monthly casualties_df, the hmi df, and the socioeconomic factor df
+    """
+
+    country_code_dict = {
+        'Afghanistan': 'AFG',
+        'Iraq': 'IRQ',
+        'Somalia': 'SOM',
+        'Sri Lanka': 'LKA'
+    }
+
+    country = country_code_dict[country_name] # select the country code of the input country
+
+    # Grab the full conflict df
+    country_path_dict = {
+        'AFG': 'Conflict_Pickles/12- Afghanistan 2003-2014',
+        'IRQ': 'Conflict_Pickles/0- Iraq 2014-',
+        'LKA': 'Conflict_Pickles/35- Sri Lanka 1987-1990',
+        'SOM': 'Conflict_Pickles/9- Somalia 2007-'
+    }
+
+    conflict_df_path = DATA_PATH.joinpath(country_path_dict[country]) # specify the filepath of the conflict df
+    conflict_df = pd.read_pickle(conflict_df_path)
+
+    # Grab the monthly casualties df (could also generate this directly with a function?)
+    monthly_casualties_df_path = DATA_PATH.joinpath('Monthly_Casualty_Pickles').joinpath(country + '_mc_df')
+    monthly_casualties_df = pd.read_pickle(monthly_casualties_df_path)
+
+    # Grab the HMI df (could also generate this directly with a function?)
+    hmi_df_path = DATA_PATH.joinpath('HMI_Pickles').joinpath(country + '_hmi_df')
+    hmi_df = pd.read_pickle(hmi_df_path)
+
+    # Grab the socioeconomic factor df (could also generate this directly with a function?)
+    se_df_path = DATA_PATH.joinpath('Socioeconomic_Pickles').joinpath(country + '_se_df')
+    se_df = pd.read_pickle(se_df_path)
+
+    return conflict_df, monthly_casualties_df, hmi_df, se_df
+
+# Here we grab/generate a linkage matrix every time we change settings
+# the other option would be to grab all 5 linkage matrices for the country in the function above
+def get_linkage_matrix(country_name, setting):
+    """
+    Grab the relevant linkage matrix for a country, based on the selected setting (1-5 currently)
+    """
+    PATH = pathlib.Path.cwd().parent
+
+    setting_dict = {
+        '1': '_pure_spatial',
+        '2': '_high_spatial_low_temporal',
+        '3': '_med_spatial_med_temporal',
+        '4': '_low_spatial_high_temporal',
+        '5': '_pure_temporal',
+    }
+
+    setting = str(setting)
+
+    country_code_dict = {
+        'Afghanistan': 'AFG',
+        'Iraq': 'IRQ',
+        'Somalia': 'SOM',
+        'Sri Lanka': 'LKA'
+    }
+
+    country_code = country_code_dict[country_name]
+    
+    linkage_path = PATH.joinpath('Linkage_Matrices').joinpath(country_code) # relevant linkage matrix folder
+    linkage_matrix_path = linkage_path.joinpath(country_code + setting_dict[setting]) # grab the relevant linkage matrix path
+    linkage_matrix = np.load(linkage_matrix_path)
+
+    return linkage_matrix
+
+
+
+
+
 
 
 # define all of the methods used to create the pickles
 # Do we also define the methods used to generate the conflict pickles from UCDP GED? Since we can't upload GED to github due to github 100mb filesize limit
 # Is this necessary?
 
+PATH = pathlib.Path.cwd().parent
+DATA_PATH = PATH.joinpath("Raw Data")
 
 def create_monthly_casualties_df(conflict_df, marker_size_scaling):
     """

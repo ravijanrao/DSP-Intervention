@@ -18,18 +18,26 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # import variables from separate data processing file
-from data_preparation import afg_se_df, afg_conflict_df, monthly_cas_df
+from data_preparation import get_country_df, get_linkage_matrix
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+### This is not optimal! See https://dash.plotly.com/sharing-data-between-callbacks ###
+    # solution would be to pre-load all of the data here, and store it in some kind of nested dictionary
+# start with afghanistan as default option
+global conflict_df, monthly_casualties_df, hmi_df, se_df
+conflict_df, monthly_casualties_df, hmi_df, se_df= get_country_df('Afghanistan')
+
+# define country dropdown menu items
+available_countries = ['Afghanistan', 'Iraq', 'Somalia', 'Sri Lanka']
 
 # define conflict dropdown menu items
 available_charts = ['Event severity over time dot plot', 'Monthly fatalities scatter plot']
 
 #selectable socioeconomic parameters
-available_indicators = afg_se_df.columns[2:] 
+available_indicators = se_df.columns[2:] 
 
 app.layout = html.Div([
     
@@ -97,11 +105,11 @@ app.layout = html.Div([
     dcc.Graph(id='indicator-chart'),
     
     dcc.RangeSlider(id = 'indicator-range',
-        min=afg_conflict_df.year.min(),
-        max=afg_conflict_df.year.max(),
+        min=conflict_df.year.min(),
+        max=conflict_df.year.max(),
         step=1,
-        value=[2001, 2018],
-        marks = {value: str(value) for value in range(afg_conflict_df.year.min(),afg_conflict_df.year.max())}
+        value=[conflict_df.year.min(), conflict_df.year.max()],
+        marks = {value: str(value) for value in range(conflict_df.year.min(),conflict_df.year.max())}
                     # do we just want to limit it to the conflict years??
     )  
 ])
@@ -116,7 +124,7 @@ app.layout = html.Div([
 def update_conflict_graph(chart_type, yaxis_type):
     # create the bubble plot
     if(chart_type == available_charts[0]):
-        fig = px.scatter(monthly_cas_df, x = 'Month', y = 'events', size = 'marker_size',
+        fig = px.scatter(monthly_casualties_df, x = 'Month', y = 'events', size = 'marker_size',
                         hover_name = 'Month', # formatting becomes weird for the heading!
                         hover_data = {
                             'marker_size': False,
@@ -132,7 +140,7 @@ def update_conflict_graph(chart_type, yaxis_type):
         return fig
     
     else:
-        fig = px.scatter(monthly_cas_df, x = 'Month', y = 'casualties')
+        fig = px.scatter(monthly_casualties_df, x = 'Month', y = 'casualties')
         
         fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest',
                          transition_duration=500)
@@ -154,7 +162,7 @@ def update_se_graph_variables(primary_yaxis, secondary_yaxis, indicator_range):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # dataframe limited to the year range
-    dff = afg_se_df[(afg_se_df.Year >= indicator_range[0]) & (afg_se_df.Year <= indicator_range[1])]
+    dff = se_df[(se_df.Year >= indicator_range[0]) & (se_df.Year <= indicator_range[1])]
     
     fig.add_trace(
     go.Scatter(x=dff['Year'], y=dff[primary_yaxis],
