@@ -16,6 +16,7 @@ import dash_html_components as html
 import plotly.express as px
 import plotly.graph_objects as go 
 from plotly.subplots import make_subplots
+from scipy.cluster.hierarchy import fcluster
 
 # import variables from separate data processing file
 from data_preparation import get_country_df, get_linkage_matrix
@@ -25,10 +26,13 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 ### This is not optimal! See https://dash.plotly.com/sharing-data-between-callbacks ###
-    # solution would be to pre-load all of the data here, and store it in some kind of nested dictionary
+    # solution would be to pre-load all of the data for all countries here, and store it in some kind of nested dictionary
 # start with afghanistan as default option
 global conflict_df, monthly_casualties_df, hmi_df, se_df
 conflict_df, monthly_casualties_df, hmi_df, se_df= get_country_df('Afghanistan')
+    # global approach won't work anyway..
+ # could instead potentially use some kind of a for loop, and our pre-made function anyway!
+
 
 # define country dropdown menu items
 available_countries = ['Afghanistan', 'Iraq', 'Somalia', 'Sri Lanka']
@@ -39,9 +43,19 @@ available_charts = ['Event severity over time dot plot', 'Monthly fatalities sca
 #selectable socioeconomic parameters
 available_indicators = se_df.columns[2:] 
 
+# import the linkage matrix
+linkage_matrix = get_linkage_matrix('Afghanistan', 3)
+
 app.layout = html.Div([
     
-    html.H2('Afghanistan Overview'),
+    html.H4('Select Country'),
+    dcc.Dropdown(
+        id='country-name',
+        options=[{'label': i, 'value': i} for i in available_countries],
+        value='Afghanistan'  
+    ),
+
+    html.H2('Country Overview'),
 
 #################### CONFLICT ELEMENTS ####################
     html.Div([
@@ -70,7 +84,28 @@ app.layout = html.Div([
     
     html.Div([
         dcc.Graph(id='selected-chart')
-    ], style={'width': '98%', 'display': 'inline-block', 'padding': '0 20'}),    
+    ], style={'width': '98%', 'display': 'inline-block', 'padding': '0 20'}),
+    
+    # 3d scatter
+        html.Div([
+        dcc.Graph(id='3d-scatter-plot')
+    ], style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'}),
+ 
+    html.Div([
+        html.P("Cluster size:"),
+        dcc.Slider(
+        id = 'cluster-size-slider',
+        min=0,
+        max=.6,
+        step=0.02,
+        value=0.16
+        )
+    ], style={
+        'borderBottom': 'thin lightgrey solid',
+        'backgroundColor': 'rgb(250, 250, 250)',
+        'padding': '10px 5px',
+        'width': '49%'
+    }),    
     
 #################### SOCIOECONOMIC ELEMENTS ####################
     html.Div([
@@ -114,8 +149,11 @@ app.layout = html.Div([
     )  
 ])
     
+#########################################################
+#################### Conflict charts ####################
+#########################################################
 
-# conflict charts
+#### Standard conflict charts ####
 @app.callback(
     Output('selected-chart', 'figure'),
     Input('chart-type', 'value'),
@@ -150,7 +188,47 @@ def update_conflict_graph(chart_type, yaxis_type):
         
         return fig
 
-# socioeconomic charts
+#### 3d chart ####
+@app.callback(
+     Output('3d-scatter-plot', 'figure'),
+     Input('cluster-size-slider', 'value')
+)
+def update_3d_graph(cutoff_value):
+    
+    # Drop cols & create date instances
+    df_clean = conflict_df[['date_start', 'best', 'latitude', 'longitude']].copy()
+    df_clean['date'] = pd.to_datetime(df_clean['date_start'])
+
+    # Calculate days from earliest event for faster comparison
+    first_date = df_clean['date'].min()
+    df_clean['days_from_earliest'] = (df_clean['date'] - first_date).dt.days
+
+    # Rename cols
+    df_clean = df_clean.rename(columns={"latitude": "lat", "longitude": "lon"})
+
+    df_clean = df_clean[['best', 'lat', 'lon', 'days_from_earliest']]
+    df_clean['side_a'] = conflict_df.side_a
+    df_clean['side_b'] = conflict_df.side_b
+
+    df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
+
+    fig = px.scatter_3d(df_clean, 
+        x='lat', y='lon', z='days_from_earliest',
+        color="cluster",
+        hover_data = {
+            'side_a': True,
+            'side_b': True
+        })
+
+#     fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest',
+#     transition_duration=500) # transition is quite buggy
+
+    return fig
+
+######################################################
+################ Socioeconomic charts ################
+######################################################
+
 @app.callback(
     Output('indicator-chart', 'figure'),
     Input('primary-yaxis', 'value'),

@@ -15,7 +15,7 @@ import numpy as np
 
 def get_country_df(country_name):
 
-    PATH = pathlib.Path.cwd().parent
+    PATH = pathlib.Path.cwd()
     DATA_PATH = PATH.joinpath("Raw Data")
 
     """
@@ -64,14 +64,14 @@ def get_linkage_matrix(country_name, setting):
     """
     Grab the relevant linkage matrix for a country, based on the selected setting (1-5 currently)
     """
-    PATH = pathlib.Path.cwd().parent
+    PATH = pathlib.Path.cwd()
 
     setting_dict = {
-        '1': '_pure_spatial',
-        '2': '_high_spatial_low_temporal',
-        '3': '_med_spatial_med_temporal',
-        '4': '_low_spatial_high_temporal',
-        '5': '_pure_temporal',
+        '1': '_pure_spatial.npy',
+        '2': '_high_spatial_low_temporal.npy',
+        '3': '_med_spatial_med_temporal.npy',
+        '4': '_low_spatial_high_temporal.npy',
+        '5': '_pure_temporal.npy',
     }
 
     setting = str(setting)
