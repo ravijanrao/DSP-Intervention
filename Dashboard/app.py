@@ -62,7 +62,7 @@ app.layout = html.Div([
     
     html.H4('Select Country'),
     dcc.Dropdown(
-        id='country-name',
+        id='selected-country',
         options=[{'label': i, 'value': i} for i in available_countries],
         value='Afghanistan'  
     ),
@@ -168,13 +168,13 @@ app.layout = html.Div([
 #### Standard conflict charts ####
 @app.callback(
     Output('selected-chart', 'figure'),
-    Input('country-name', 'value'),
+    Input('selected-country', 'value'),
     Input('chart-type', 'value'),
     Input('yaxis-type', 'value')
 )
-def update_conflict_graph(country_name, chart_type, yaxis_type):
+def update_conflict_graph(selected_country, chart_type, yaxis_type):
     # create the bubble plot
-    country = country_code_dict[country_name]
+    country = country_code_dict[selected_country]
     if(chart_type == available_charts[0]):
         fig = px.scatter(conflict_dict[country]['monthly_casualties_df'], x = 'Month', y = 'events', size = 'marker_size',
         # fig = px.scatter(monthly_casualties_df, x = 'Month', y = 'events', size = 'marker_size',
@@ -207,14 +207,15 @@ def update_conflict_graph(country_name, chart_type, yaxis_type):
 #### NEEDS TO BE UPDATED TO ALLOW FOR CHANGE OF SETTING! #####
 @app.callback(
      Output('3d-scatter-plot', 'figure'),
-     Input('country-name', 'value'),
+     Input('selected-country', 'value'),
      Input('cluster-size-slider', 'value')
 )
-def update_3d_graph(country_name, cutoff_value):
-    country = country_code_dict[country_name]
+def update_3d_graph(selected_country, cutoff_value):
+    country = country_code_dict[selected_country]
+
     # Drop cols & create date instances
-    df_clean = conflict_dict[country]['conflict_df']
-    df_clean = df_clean[['date_start', 'best', 'latitude', 'longitude']]
+    # all of this data processing is not necessary unless we change country!
+    df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
     df_clean['date'] = pd.to_datetime(df_clean['date_start'])
 
     # Calculate days from earliest event for faster comparison
@@ -222,22 +223,20 @@ def update_3d_graph(country_name, cutoff_value):
     df_clean['days_from_earliest'] = (df_clean['date'] - first_date).dt.days
 
     # Rename cols
-    df_clean = df_clean.rename(columns={"latitude": "lat", "longitude": "lon"})
+    # df_clean = df_clean.rename(columns={"latitude": "lat", "longitude": "lon"})
 
-    df_clean = df_clean[['best', 'lat', 'lon', 'days_from_earliest']]
-    df_clean['side_a'] = conflict_df.side_a
-    df_clean['side_b'] = conflict_df.side_b
-
+    # grab relevant linkage matrix
     linkage_matrix = conflict_dict[country]['linkage']['3']
-
+ 
     df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
 
     fig = px.scatter_3d(df_clean, 
-        x='lat', y='lon', z='days_from_earliest',
+        x='latitude', y='longitude', z='days_from_earliest',
         color="cluster",
         hover_data = {
             'side_a': True,
-            'side_b': True
+            'side_b': True,
+            'date': True
         })
 
 #     fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest',
@@ -251,14 +250,14 @@ def update_3d_graph(country_name, cutoff_value):
 
 @app.callback(
     Output('indicator-chart', 'figure'),
-    Input('country-name', 'value'),
+    Input('selected-country', 'value'),
     Input('primary-yaxis', 'value'),
     Input('secondary-yaxis', 'value'),
     Input('indicator-range', 'value')
 )
-def update_se_graph_variables(country_name, primary_yaxis, secondary_yaxis, indicator_range):
+def update_se_graph_variables(selected_country, primary_yaxis, secondary_yaxis, indicator_range):
     
-    country = country_code_dict[country_name]
+    country = country_code_dict[selected_country]
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
