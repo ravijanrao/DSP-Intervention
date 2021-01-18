@@ -212,7 +212,7 @@ def update_conflict_graph(selected_country, chart_type, yaxis_type):
 )
 def update_3d_graph(selected_country, cutoff_value):
     country = country_code_dict[selected_country]
-    print(country)
+
     # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
@@ -227,7 +227,7 @@ def update_3d_graph(selected_country, cutoff_value):
 
     # grab relevant linkage matrix
     linkage_matrix = conflict_dict[country]['linkage']['3']
-    print(country + 'yeah')
+ 
     df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
 
     fig = px.scatter_3d(df_clean, 
