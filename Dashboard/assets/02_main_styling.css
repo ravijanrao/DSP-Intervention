@@ -1,0 +1,71 @@
+html {
+    background: #e2e1e0;
+    font-size: 10px;
+    box-sizing: border-box;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+}
+
+p {
+    margin: 1em 0;
+}
+
+/* 
+  Grid layout 
+  specifics
+*/
+
+.grid-container {
+    display: grid;
+    box-sizing: border-box;
+    grid-template-areas:    "side map map"  
+                            "side  country-overview country-overview"  
+                            "side 3d-scatter st-knox" 
+                            "side  se-factors se-factors";
+}
+
+.grid-item {
+    background: #fff;
+    border-radius: 2px;
+    display: inline-block;
+    /* display: inline-block; */
+    /* height: 300px; */
+    margin: 5px;
+    padding: 1em;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.grid-sidebar {
+    margin: 0;
+}
+
+.grid-map {
+    padding: 0;
+}
+
+
+/* 
+  Spacing on inputs, labels, sliders..
+*/
+
+.radio-input label {
+    display: inline-block;
+}
+
+.side-by-side-input {
+    display: flex;
+}
+.side-by-side-input > div {
+    flex: 1;
+    margin: 0 6px;
+}
+
+#indicator-range {
+    margin: 10px;
+    padding: 20px;
+}
