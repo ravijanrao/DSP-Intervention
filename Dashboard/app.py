@@ -44,6 +44,8 @@ available_charts = [
     "Monthly fatalities scatter plot",
 ]
 
+
+
 # selectable socioeconomic parameters
 # available_indicators = se_df.columns[2:]
 available_indicators = conflict_dict["AFG"]["se_df"].columns[2:]
@@ -54,25 +56,40 @@ available_indicators = conflict_dict["AFG"]["se_df"].columns[2:]
 
 app.layout = html.Div(
     [
+        html.Div(className="grid-item grid-text-container",
+                 style={"gridArea": "nieuweComponent"},
+                 children=[
+                     html.H2("Test")
+                 ] 
+         ),
+         
         # The sidebar div
         html.Div(
-            className="grid-item grid-sidebar",
-            style={"grid-area": "side"},
+            className="grid-item grid-text-container",
+            style={"gridArea": "side"}, 
             children=[
-                html.H2("[DSP dashboard concept]"), 
+                html.H2("DSP / Conflict Dashboard"), 
                 html.Label("Select conflict"),
                 dcc.Dropdown(
                     id="selected-country",
                     options=[{"label": i, "value": i} for i in country_code_dict],
                     value="Afghanistan"
                 ),
-                html.P("Additional text explaning the conflict.")
+                html.P("Additional text explaining the conflict."),
+                html.Div(className="logos-container", children=[
+                    html.Img(src="https://www.timaf.org/wp-content/uploads/2018/10/uva-logo.png"),
+                    html.Img(src="https://www.tno.nl/media/7665/tno_logo_zwart_400.jpg?rnd=1"),
+                    # html.Img(src="https://dash.plotly.com/assets/images/logo-plotly.png"),
+                    ]
+                )
+
+                
             ]
         ), 
 
         html.Div(
-            className="grid-item grid-graph-component",
-            style={"grid-area": "map"},
+            className="grid-item grid-map-container",
+            style={"gridArea": "map"},
             children=[
                 dcc.Graph(id="main-map")
             ]
@@ -80,8 +97,8 @@ app.layout = html.Div(
         
         # Bubble chart component
         html.Div(
-            className="grid-item grid-graph-component",
-            style={"grid-area": "country-overview"},
+            className="grid-item grid-graph-container",
+            style={"gridArea": "country-overview"},
             children=[
                 html.H4("Conflict Analysis", className="component__title"),
                 html.Div(
@@ -110,8 +127,8 @@ app.layout = html.Div(
 
         # 3d-scatter-plot / SpaceTime clustering
         html.Div(
-            className="grid-item grid-graph-component",
-            style={"grid-area": "3d-scatter"},
+            className="grid-item grid-graph-container",
+            style={"gridArea": "scatter"},
             children=[
                 html.H4("Space-time clustering"),
                 html.Label("Select cluster size"),
@@ -122,18 +139,9 @@ app.layout = html.Div(
             ]
         ),
 
-        #     style={
-        #         "borderBottom": "thin lightgrey solid",
-        #         "backgroundColor": "rgb(250, 250, 250)",
-        #         "padding": "10px 5px",
-        #         "width": "49%",
-        #     },
-        # ),
-        #################### SOCIOECONOMIC ELEMENTS ####################
-
         html.Div(
-            className="grid-item grid-graph-component",
-            style={"grid-area": "se-factors"},
+            className="grid-item grid-graph-container",
+            style={"gridArea": "se-factors"},
             children=[
                 html.H4("Socioeconomic Factors"),
                 html.Div(
@@ -182,12 +190,12 @@ app.layout = html.Div(
         ),
 
         html.Div(
-            className="grid-item grid-graph-component",
-            style={"grid-area": "st-knox"},
+            className="grid-item grid-graph-container",
+            style={"gridArea": "st-knox"},
             children=[
                 html.H4("Space-time contingency tables")
             ]
-        ),
+        )
     ], className="grid-container"
 )
 
@@ -195,6 +203,7 @@ app.layout = html.Div(
 #################### Conflict charts ####################
 #########################################################
 
+#### Main Map
 @app.callback(
     Output("main-map", "figure"),
     Input("selected-country", "value")
@@ -338,9 +347,7 @@ def update_se_graph_variables(selected_country, primary_yaxis, secondary_yaxis, 
                       transition_duration=500)
     
     return fig
+  
 
 if __name__ == '__main__':
-    app.run_server(debug=False, port=3007) 
-
-# open your web browser and go to : http://127.0.0.1:8050/
-# if you want to see the dashboard in action   # Drop cols
+    app.run_server(debug=True, port=1337) 

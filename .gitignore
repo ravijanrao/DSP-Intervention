@@ -1,4 +1,6 @@
 # ignore all logs 
 *.log
 *.pyc
+.vscode
 .DS_Store
+settings.json
