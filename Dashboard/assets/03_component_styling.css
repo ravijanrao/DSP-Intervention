@@ -1,0 +1,26 @@
+/* 
+  Spacing on inputs, labels, sliders..
+*/
+
+/* Map Container */
+#main-map {
+    height: 600px;
+}
+
+.radio-input label {
+    display: inline-block;
+}
+
+.side-by-side-input {
+    display: flex;
+}
+
+.side-by-side-input > div {
+    flex: 1;
+    margin: 0 6px;
+}
+
+#indicator-range {
+    margin: 10px;
+    padding: 20px;
+}
