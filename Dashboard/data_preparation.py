@@ -8,7 +8,7 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 
-# generate entire dict
+# generate entire dict containing the dataframes pertaining to each country
 def generate_conflict_dict():
     """
     Function to create a complete dict containing all of the data and dataframes for each country
@@ -69,7 +69,82 @@ def generate_conflict_dict():
 
     return conflict_dict
 
-
+def generate_relevant_entries_dict():
+    relevant_entries_dict = {
+        # head of the case description
+        'HMIID': 'Short title of the intervention',
+        'WBCC': 'World Bank country code of the target country',
+        'UCDPID': 'Conflict identification in UCDP datasets',
+        'STATUS': 'Status of the intervention',
+        'HMISTART': 'Date of the start of the intervention',
+        'HMIEND': 'Date of the end of the intervention',
+        'ENDTYPE': "Type of the intervention's ending",
+        
+        # the violent emergency in the target country
+        'VIOSTART': 'Date of the beginning of the violent emergency',
+        'VIOEND': 'Date of the ending of the violent emergency',
+        'ISSUE': 'Main conflict issue acording to UCDP',
+        'FATALITY': 'Number of fatalities in the target country due to the violent emergency prior to the intervention',
+        'AREA': 'Size of the target target country of the intervention',
+        
+        # the military intervention
+        'UNSC': 'Did the United Nations Security Council mandate or approve the intervention?',
+        'REGIOORG': 'Did a regional organization approve the military intervention?',
+        'GOVTPERM': 'Did the government in power of the target country permit the intervention?',
+        'INTERVEN1': 'Who intervened?',
+        'INTERVEN2': 'Who else intervened?',
+        'INTERVEN3': 'Was there a further intervener?',
+        'COLONY': 'Was one of the three most important interveners a former colonial power or mandate power of the target country or are this intervener and the target country successors of a common state?',
+        'SAVING': 'Did the interveners declare the objective of saving strangers?',
+        'TARGET': 'Against whom or what was the intervention primarily directed?',
+        'TATROOP': 'Best estimate of maximum number of combatants at the disposal of the primarily targeted side',
+        'ACTIVE': 'Did the intervening forces actively fulfil their mandate or did they remain passive?',
+        'FORCE': 'Did the state or organization that deployed the intervention troops authorize the use of force for any activity?',
+        'INTERPOS': 'Did the intervening forces engage in a mission of interposition?',
+        'STARINTE': 'When did the intervening forces start interposition?',
+        'ENDINTE': 'When did the intervening forces end interposition?',
+        'DISARM': 'Did the intervening forces engage in demobilizing and disarming local forces?',
+        'STARDISA': 'When did the intervening forces start to demobilize and disarm local forces?',
+        'ENDDISA': 'When did the intervening forces end demobilizing and disarming local forces?',
+        'CIVILIAN': 'Did the intervening forces engage in protecting civilians?',
+        'STARCIVI': 'When did the intervening forces start to protect civilians?',
+        'ENDCIVI': 'When did the intervening forces end protecting civilians?',
+        'HUMANAID': 'Did the intervening forces engage in protecting the delivery of humanitarian aid?',
+        'STARHUMA': 'When did the intervening forces start to protect the delivery of humanitarian aid?',
+        'ENDHUMA': 'When did the intervening forces end protecting the delivery of humanitarian aid?',
+        'NOFLY': 'Did the intervening troops engage in enforcing a no-fly zone?',
+        'STARFLY': 'When did the intervening forces start to enforce a no-fly zone?',
+        'ENDLY': 'When did the intervening forces end enforcing a no-fly zone?',
+        'SAFEAREA': 'Did the intervening troops engage in enforcing a safe area or protection area on the ground?',
+        'STARAREA': 'When did the intervening forces start to enforce a safe area or protection area on the ground?',
+        'ENDAREA': 'When did the intervening forces end enforcing a safe area or protection area on the ground?',
+        'ENFORCE': 'Did the intervening troops engage in enforcing the acceptance or implementation of a ceasefire for the entire conflict or of a peace agreement?',
+        'STARENFO': 'When did the intervening forces start to enforce a ceasefire for the entire conflict or a peace agreement?',
+        'ENDENFO': 'When did the intervening forces end enforcing a ceasefire for the entire conflict or a peace agreement?',
+        'LOST': 'Did the intervening troops engage in helping one conflict party avoid its military defeat?',
+        'STARLOST': 'When did the intervening forces start to help one conflict party avoid its military defeat?',
+        'ENDLOST': 'When did the intervening forces end helping one conflict party avoid its military defeat?',
+        'REGIME': 'Did the intervening troops engage in bringing about a regime change?',
+        'STARREGI': 'When did the intervening forces start to bring about a regime change?',
+        'ENDREGI': 'When did the intervening forces end bringing about a regime change?',
+        'GROUNDFO': 'Were ground forces deployed in the target country?',
+        'GROUNDNO': 'In the case of deployed ground forces, what was their maximum size?',
+        'GROUNDPO': 'The maximum size of deployed ground forces in relation to the size of the target country’s population',
+        'COUNTTRO': 'Did the intervention face a significant military counter-intervener who deployed troops in the target country?',
+        'COUNTARM': 'Did the intervention face a military counter-intervener who delivered arms to the target country?',
+        
+        # Moves and motives that counteract the intention of saving strangers
+        'CONTRA4': 'The intervener stressed that the people to be saved belong to his people or nation',
+        'CONTRA5': 'The intervener declared the intention to prevent a rival from assuming control over the target country',
+        
+        # The intervention's aftermath
+        'LOSSES': 'Best estimate of number of intervening troops who died during the intervention',
+        'LOSSRATE': 'Losses in relation to the number of deployed ground forces',
+        'NEWVIOL': 'Did a violent emergency occur in the target country within five years after the end of the intervention?',
+        'NEWFATAL': 'Number of fatalities due to the new violent emergency',
+        'DISLOCATE': 'Are there indications that the intervention triggered violent emergencies or significantly exacerbated violent emergencies in neighboring countries? '
+    }
+    return relevant_entries_dict
 
 # define all of the methods used to create the pickles?
 # Do we also define the methods used to generate the conflict pickles from UCDP GED? Since we can't upload GED to github due to github 100mb filesize limit
