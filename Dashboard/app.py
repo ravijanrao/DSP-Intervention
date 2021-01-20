@@ -28,14 +28,6 @@ conflict_dict = generate_conflict_dict()
 
 app = dash.Dash(__name__)
 
-### This is not optimal! See https://dash.plotly.com/sharing-data-between-callbacks ###
-# solution would be to pre-load all of the data for all countries here, and store it in some kind of nested dictionary
-# start with afghanistan as default option
-# global conflict_df, monthly_casualties_df, hmi_df, se_df
-# conflict_df, monthly_casualties_df, hmi_df, se_df= get_country_df('Afghanistan')
-# global approach won't work anyway..
-# could instead potentially use some kind of a for loop, and our pre-made function anyway!
-
 conflict_df = conflict_dict["AFG"]["conflict_df"]
 
 # dict to convert from country name to country code
