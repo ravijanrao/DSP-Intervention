@@ -22,9 +22,10 @@ from plotly.subplots import make_subplots
 from scipy.cluster.hierarchy import fcluster
 
 # import variables from separate data processing file
-from data_preparation import generate_conflict_dict
+from data_preparation import generate_conflict_dict, generate_relevant_entries_dict
 
 conflict_dict = generate_conflict_dict()
+relevant_entries_dict = generate_relevant_entries_dict()
 
 app = dash.Dash(__name__)
 
@@ -44,8 +45,6 @@ available_charts = [
     "Monthly fatalities scatter plot",
 ]
 
-
-
 # selectable socioeconomic parameters
 # available_indicators = se_df.columns[2:]
 available_indicators = conflict_dict["AFG"]["se_df"].columns[2:]
@@ -56,40 +55,51 @@ available_indicators = conflict_dict["AFG"]["se_df"].columns[2:]
 
 app.layout = html.Div(
     [
-        html.Div(className="grid-item grid-text-container",
-                 style={"gridArea": "nieuweComponent"},
-                 children=[
-                     html.H2("Test")
-                 ] 
-         ),
-         
         # The sidebar div
         html.Div(
-            className="grid-item grid-text-container",
-            style={"gridArea": "side"}, 
+            className="grid-item grid-sidebar",
+            style={"grid-area": "side"},
             children=[
-                html.H2("DSP / Conflict Dashboard"), 
+                html.H2("[DSP dashboard concept]"), 
                 html.Label("Select conflict"),
                 dcc.Dropdown(
                     id="selected-country",
                     options=[{"label": i, "value": i} for i in country_code_dict],
                     value="Afghanistan"
                 ),
-                html.P("Additional text explaining the conflict."),
-                html.Div(className="logos-container", children=[
-                    html.Img(src="https://www.timaf.org/wp-content/uploads/2018/10/uva-logo.png"),
-                    html.Img(src="https://www.tno.nl/media/7665/tno_logo_zwart_400.jpg?rnd=1"),
-                    # html.Img(src="https://dash.plotly.com/assets/images/logo-plotly.png"),
+                html.Div(
+                    children = [
+                        html.H5("Basic Summary"),
+                            dcc.Markdown(
+                            id = "basic-summary",
+                            children = "Additional information summarizing the intervention."
+                            ),
                     ]
-                )
-
-                
+                ),
+                html.Div(
+                    children = [
+                        html.H5("Description of approval/motivations:"),
+                        dcc.Markdown(
+                            id = "approval-motivations",
+                            children = "Additional information capturing the motivations/approval of the intervention."
+                            ),
+                    ]
+                ),
+                html.Div(
+                    children = [
+                        html.H5("Basic Intervention Characteristics:"),
+                        dcc.Markdown(
+                            id = "intervention-characteristics",
+                            children = "Basic intervention characteristics."
+                            ),
+                    ]
+                ),
             ]
         ), 
 
         html.Div(
-            className="grid-item grid-map-container",
-            style={"gridArea": "map"},
+            className="grid-item grid-graph-component",
+            style={"grid-area": "map"},
             children=[
                 dcc.Graph(id="main-map")
             ]
@@ -97,8 +107,8 @@ app.layout = html.Div(
         
         # Bubble chart component
         html.Div(
-            className="grid-item grid-graph-container",
-            style={"gridArea": "country-overview"},
+            className="grid-item grid-graph-component",
+            style={"grid-area": "country-overview"},
             children=[
                 html.H4("Conflict Analysis", className="component__title"),
                 html.Div(
@@ -125,23 +135,50 @@ app.layout = html.Div(
             ]
         ),
 
-        # 3d-scatter-plot / SpaceTime clustering
+        # SpaceTime clustering charts
         html.Div(
-            className="grid-item grid-graph-container",
-            style={"gridArea": "scatter"},
+            className="grid-item grid-graph-component",
+            style={"grid-area": "3d-scatter"},
             children=[
                 html.H4("Space-time clustering"),
-                html.Label("Select cluster size"),
+                html.Label("Select spatial vs. temporal weighting for cluster generation:"),
+                dcc.Slider(
+                    id="cluster-weighting",
+                    min=1,
+                    max=5,
+                    marks = {i: str(i) for i in range(1,6)},
+                    value=3
+                ),
+                dcc.Graph(id="3d-scatter-plot"),
+                html.Label("Select cluster size:"),
                 dcc.Slider(
                     id="cluster-size-slider", min=0, max=0.6, step=0.02, value=0.16
                 ),
-                dcc.Graph(id="3d-scatter-plot"),
+            ]
+        ),
+        html.Div(
+            className="grid-item grid-graph-component",
+            style={"grid-area": "cluster-scatter-timeline"},
+            children=[
+                html.H4("Cluster Over Time"),
+                html.Label(children="Cluster number: 1", id="cluster-number"),
+                dcc.Graph(id="cluster-scatter-timeline"),
+            ]
+        ),
+            html.Div(
+            className="grid-item grid-graph-component",
+            style={"grid-area": "cluster-scatter-geographic"},
+            children=[
+                html.H4("Cluster in Space"),
+                dcc.Graph(id="cluster-scatter-geographic"),
             ]
         ),
 
+        #################### SOCIOECONOMIC ELEMENTS ####################
+
         html.Div(
-            className="grid-item grid-graph-container",
-            style={"gridArea": "se-factors"},
+            className="grid-item grid-graph-component",
+            style={"grid-area": "se-factors"},
             children=[
                 html.H4("Socioeconomic Factors"),
                 html.Div(
@@ -190,20 +227,70 @@ app.layout = html.Div(
         ),
 
         html.Div(
-            className="grid-item grid-graph-container",
-            style={"gridArea": "st-knox"},
+            className="grid-item grid-graph-component",
+            style={"grid-area": "st-knox"},
             children=[
                 html.H4("Space-time contingency tables")
             ]
-        )
+        ),
     ], className="grid-container"
 )
+
+#########################################################
+################### Sidebar Elements ####################
+#########################################################
+
+@app.callback(
+    Output("basic-summary", "children"),
+    Input("selected-country", "value")
+)
+def update_basic_summary(selected_country):
+    country = country_code_dict[selected_country]
+    hmi_df = conflict_dict[country]['hmi_df']
+    relevant_entries = ['HMISTART', 'HMIEND', 'TARGET', 'INTERVEN1', 'INTERVEN2', 'INTERVEN3']
+    text = ""
+    for entry in relevant_entries:
+        if(hmi_df[entry] != -88):
+            text += '\n**{}**\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
+
+    return text
+
+@app.callback(
+    Output("approval-motivations", "children"),
+    Input("selected-country", "value")
+)
+def update_approval_motivations(selected_country):
+    country = country_code_dict[selected_country]
+    hmi_df = conflict_dict[country]['hmi_df']
+    relevant_entries = ['ISSUE', 'UNSC', 'REGIOORG', 'GOVTPERM', 'CONTRA4', 'CONTRA5']
+    text = ""
+    for entry in relevant_entries:
+        if(hmi_df[entry] != -88):
+            text += '\n**{}**\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
+
+    return text
+
+@app.callback(
+    Output("intervention-characteristics", "children"),
+    Input("selected-country", "value")
+)
+def update_intervention_characteristics(selected_country):
+    country = country_code_dict[selected_country]
+    hmi_df = conflict_dict[country]['hmi_df']
+    relevant_entries = ['TATROOP', 'GROUNDFO', 'GROUNDNO', 'ACTIVE', 'FORCE']
+    text = ""
+    for entry in relevant_entries:
+        if(hmi_df[entry] != -88):
+            text += '\n**{}**\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
+
+    return text
+
+
 
 #########################################################
 #################### Conflict charts ####################
 #########################################################
 
-#### Main Map
 @app.callback(
     Output("main-map", "figure"),
     Input("selected-country", "value")
@@ -262,20 +349,22 @@ def update_conflict_graph(selected_country, chart_type, yaxis_type):
 
     return fig
 
-#### 3d chart ####
+#### 3d cluster chart ####
 #### NEEDS TO BE UPDATED TO ALLOW FOR CHANGE OF SETTING! #####
 @app.callback(
     Output("3d-scatter-plot", "figure"),
     Input("selected-country", "value"),
+    Input("cluster-weighting", "value"),
     Input("cluster-size-slider", "value"),
 )
-def update_3d_graph(selected_country, cutoff_value):
+def update_3d_graph(selected_country, cluster_weighting, cutoff_value):
     country = country_code_dict[selected_country]
 
      # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
     df_clean['date'] = pd.to_datetime(df_clean['date_start'])
+    df_clean = df_clean.rename(columns={"best": "casualties"})
 
     # Calculate days from earliest event for faster comparison
     first_date = df_clean['date'].min()
@@ -285,11 +374,12 @@ def update_3d_graph(selected_country, cutoff_value):
     # df_clean = df_clean.rename(columns={"latitude": "lat", "longitude": "lon"})
 
     # grab relevant linkage matrix
-    linkage_matrix = conflict_dict[country]['linkage']['3']
+    linkage_matrix = conflict_dict[country]['linkage'][str(cluster_weighting)]
  
     df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
 
-    fig = px.scatter_3d(df_clean, 
+    #create the full scatter plot
+    full_scatter_plot = px.scatter_3d(df_clean, 
         x='latitude', y='longitude', z='days_from_earliest',
         color="cluster",
         hover_data = {
@@ -298,12 +388,47 @@ def update_3d_graph(selected_country, cutoff_value):
             'date': True
         }
     )
+    return full_scatter_plot
 
-    # fig.update_layout(margin={'l': 40, 'b': 40, 't': 0, 'r': 0})
-#     fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest',
-#     transition_duration=500) # transition is quite buggy
+# updating the time and geographic scatter plot of the selected cluster
+@app.callback(
+    Output('cluster-scatter-timeline', 'figure'),
+    Output('cluster-scatter-geographic', 'figure'),
+    Output('cluster-number', 'children'),
+    Input("selected-country", "value"),
+    Input("cluster-weighting", "value"),
+    Input("cluster-size-slider", "value"),
+    Input('3d-scatter-plot', 'clickData'),
+)
+def update_cluster_charts(selected_country, cluster_weighting, cutoff_value, clickData, ):
+    country = country_code_dict[selected_country]
+    df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
+    df_clean['date'] = pd.to_datetime(df_clean['date_start'])
+    df_clean = df_clean.rename(columns={"best": "casualties"})
 
-    return fig
+    # grab relevant linkage matrix
+    linkage_matrix = conflict_dict[country]['linkage'][str(cluster_weighting)]
+    df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
+
+    # create the time chart
+    if(clickData):
+        cluster_id = clickData['points'][0]['marker.color']
+    else:
+        cluster_id = 1
+
+    scatter_timeline = px.scatter(df_clean[df_clean.cluster == cluster_id], 
+            x='date', y='casualties'
+        )
+
+    scatter_geographic = px.scatter_mapbox(df_clean[df_clean.cluster == cluster_id], lat="latitude", lon="longitude", zoom=5,
+                           mapbox_style="light")
+    scatter_geographic.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
+    scatter_geographic.update_layout(showlegend=False)
+
+    cluster_text = 'Cluster number: ' + str(cluster_id)
+    # print('cluster number: ' + str(cluster_id))
+
+    return [scatter_timeline, scatter_geographic, cluster_text]
 
 ######################################################
 ################ Socioeconomic charts ################
@@ -347,7 +472,8 @@ def update_se_graph_variables(selected_country, primary_yaxis, secondary_yaxis, 
                       transition_duration=500)
     
     return fig
-  
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=1337) 
+    app.run_server(debug=True, port=3007) 
+
+# if you want to see the dashboard in action   # Drop cols

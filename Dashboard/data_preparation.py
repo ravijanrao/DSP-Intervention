@@ -8,7 +8,7 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 
-# generate entire dict containing the dataframes pertaining to each country
+# generate entire dict
 def generate_conflict_dict():
     """
     Function to create a complete dict containing all of the data and dataframes for each country
@@ -70,7 +70,7 @@ def generate_conflict_dict():
     return conflict_dict
 
 def generate_relevant_entries_dict():
-    relevant_entries_dict = {
+    relevant_entries_dict = { 
         # head of the case description
         'HMIID': 'Short title of the intervention',
         'WBCC': 'World Bank country code of the target country',
@@ -83,7 +83,7 @@ def generate_relevant_entries_dict():
         # the violent emergency in the target country
         'VIOSTART': 'Date of the beginning of the violent emergency',
         'VIOEND': 'Date of the ending of the violent emergency',
-        'ISSUE': 'Main conflict issue acording to UCDP',
+        'ISSUE': 'Main conflict issue of the pre-existing violent emergency acording to UCDP',
         'FATALITY': 'Number of fatalities in the target country due to the violent emergency prior to the intervention',
         'AREA': 'Size of the target target country of the intervention',
         
@@ -134,8 +134,8 @@ def generate_relevant_entries_dict():
         'COUNTARM': 'Did the intervention face a military counter-intervener who delivered arms to the target country?',
         
         # Moves and motives that counteract the intention of saving strangers
-        'CONTRA4': 'The intervener stressed that the people to be saved belong to his people or nation',
-        'CONTRA5': 'The intervener declared the intention to prevent a rival from assuming control over the target country',
+        'CONTRA4': 'Did the intervener stress that the people to be saved belong to their people or nation?',
+        'CONTRA5': 'Did the intervener declare the intention to prevent a rival from assuming control over the target country?',
         
         # The intervention's aftermath
         'LOSSES': 'Best estimate of number of intervening troops who died during the intervention',
@@ -145,6 +145,7 @@ def generate_relevant_entries_dict():
         'DISLOCATE': 'Are there indications that the intervention triggered violent emergencies or significantly exacerbated violent emergencies in neighboring countries? '
     }
     return relevant_entries_dict
+        
 
 # define all of the methods used to create the pickles?
 # Do we also define the methods used to generate the conflict pickles from UCDP GED? Since we can't upload GED to github due to github 100mb filesize limit
