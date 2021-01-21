@@ -1,16 +1,42 @@
+@import url("https://use.typekit.net/our4hzl.css");
+
 html {
-    background: #e2e1e0;
-    font-size: 10px;
-    box-sizing: border-box;
+    /* background: #e2e1e0; */
+    background: #F3F8FF;
+    color: #103462;
 }
 
 body {
-    padding: 0;
-    margin: 0;
+    font-size: 16px;
+    font-family: IBM Plex Sans, sans-serif; 
 }
 
 p {
     margin: 1em 0;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 4em;
+}
+
+h2 {
+    font-size: 3em;
+}
+
+h3 {
+    font-size: 2em;
+}
+
+h4 {
+    font-size: 1.2em;
+}
+
+p {
+    font-size: 1em;
 }
 
 /* 
@@ -20,14 +46,13 @@ p {
 
 .grid-container {
     display: grid;
-    /* box-sizing: border-box; */
     width: 100%;
     grid-template-columns: 1fr 5fr;
-    grid-template-areas:    "side map"  
-                            "side  country-overview"  
-                            "side 3d-scatter"
-                            "side cluster-scatter-timeline"
-                            "side cluster-scatter-geographic"
+    /* box-sizing: border-box; */
+    grid-template-areas:    "side map" 
+                            "side nieuweComponent" 
+                            "side country-overview"  
+                            "side scatter"
                             "side st-knox" 
                             "side se-factors";
 }
@@ -35,42 +60,30 @@ p {
 .grid-item {
     background: #fff;
     border-radius: 2px;
-    display: inline-block;
-    /* display: inline-block; */
-    /* height: 300px; */
     margin: 5px;
-    padding: 1em;
     position: relative;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     transition: all 0.3s cubic-bezier(.25,.8,.25,1);
 }
 
-.grid-sidebar {
-    margin: 0;
+.grid-graph-container, .grid-text-container {
+    padding: 1.4em;
 }
 
-.grid-map {
+.grid-map-container {
     padding: 0;
 }
 
-
-/* 
-  Spacing on inputs, labels, sliders..
-*/
-
-.radio-input label {
-    display: inline-block;
+.logos-container {
+    border-top: 1px solid lightgrey;
+    margin-top: 50px;
+    padding: 2em;
+    position: fixed;
+    bottom: 0;
 }
-
-.side-by-side-input {
-    display: flex;
-}
-.side-by-side-input > div {
-    flex: 1;
-    margin: 0 6px;
-}
-
-#indicator-range {
-    margin: 10px;
-    padding: 20px;
+.logos-container > img {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    max-width: 150px;
 }
