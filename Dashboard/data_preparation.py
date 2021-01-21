@@ -145,6 +145,7 @@ def generate_relevant_entries_dict():
         'DISLOCATE': 'Are there indications that the intervention triggered violent emergencies or significantly exacerbated violent emergencies in neighboring countries? '
     }
     return relevant_entries_dict
+        
 
 # define all of the methods used to create the pickles?
 # Do we also define the methods used to generate the conflict pickles from UCDP GED? Since we can't upload GED to github due to github 100mb filesize limit

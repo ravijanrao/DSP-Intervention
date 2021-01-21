@@ -135,17 +135,25 @@ app.layout = html.Div(
             ]
         ),
 
-        # 3d-scatter-plot / SpaceTime clustering
+        # SpaceTime clustering charts
         html.Div(
             className="grid-item grid-graph-component",
             style={"grid-area": "3d-scatter"},
             children=[
                 html.H4("Space-time clustering"),
-                html.Label("Select cluster size"),
+                html.Label("Select spatial vs. temporal weighting for cluster generation:"),
+                dcc.Slider(
+                    id="cluster-weighting",
+                    min=1,
+                    max=5,
+                    marks = {i: str(i) for i in range(1,6)},
+                    value=3
+                ),
+                dcc.Graph(id="3d-scatter-plot"),
+                html.Label("Select cluster size:"),
                 dcc.Slider(
                     id="cluster-size-slider", min=0, max=0.6, step=0.02, value=0.16
                 ),
-                dcc.Graph(id="3d-scatter-plot"),
             ]
         ),
         html.Div(
@@ -153,6 +161,7 @@ app.layout = html.Div(
             style={"grid-area": "cluster-scatter-timeline"},
             children=[
                 html.H4("Cluster Over Time"),
+                html.Label(children="Cluster number: 1", id="cluster-number"),
                 dcc.Graph(id="cluster-scatter-timeline"),
             ]
         ),
@@ -345,15 +354,17 @@ def update_conflict_graph(selected_country, chart_type, yaxis_type):
 @app.callback(
     Output("3d-scatter-plot", "figure"),
     Input("selected-country", "value"),
+    Input("cluster-weighting", "value"),
     Input("cluster-size-slider", "value"),
 )
-def update_3d_graph(selected_country, cutoff_value):
+def update_3d_graph(selected_country, cluster_weighting, cutoff_value):
     country = country_code_dict[selected_country]
 
      # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
     df_clean['date'] = pd.to_datetime(df_clean['date_start'])
+    df_clean = df_clean.rename(columns={"best": "casualties"})
 
     # Calculate days from earliest event for faster comparison
     first_date = df_clean['date'].min()
@@ -363,11 +374,12 @@ def update_3d_graph(selected_country, cutoff_value):
     # df_clean = df_clean.rename(columns={"latitude": "lat", "longitude": "lon"})
 
     # grab relevant linkage matrix
-    linkage_matrix = conflict_dict[country]['linkage']['3']
+    linkage_matrix = conflict_dict[country]['linkage'][str(cluster_weighting)]
  
     df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
 
-    fig = px.scatter_3d(df_clean, 
+    #create the full scatter plot
+    full_scatter_plot = px.scatter_3d(df_clean, 
         x='latitude', y='longitude', z='days_from_earliest',
         color="cluster",
         hover_data = {
@@ -376,9 +388,47 @@ def update_3d_graph(selected_country, cutoff_value):
             'date': True
         }
     )
-    return fig
+    return full_scatter_plot
 
+# updating the time and geographic scatter plot of the selected cluster
+@app.callback(
+    Output('cluster-scatter-timeline', 'figure'),
+    Output('cluster-scatter-geographic', 'figure'),
+    Output('cluster-number', 'children'),
+    Input("selected-country", "value"),
+    Input("cluster-weighting", "value"),
+    Input("cluster-size-slider", "value"),
+    Input('3d-scatter-plot', 'clickData'),
+)
+def update_cluster_charts(selected_country, cluster_weighting, cutoff_value, clickData, ):
+    country = country_code_dict[selected_country]
+    df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
+    df_clean['date'] = pd.to_datetime(df_clean['date_start'])
+    df_clean = df_clean.rename(columns={"best": "casualties"})
 
+    # grab relevant linkage matrix
+    linkage_matrix = conflict_dict[country]['linkage'][str(cluster_weighting)]
+    df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
+
+    # create the time chart
+    if(clickData):
+        cluster_id = clickData['points'][0]['marker.color']
+    else:
+        cluster_id = 1
+
+    scatter_timeline = px.scatter(df_clean[df_clean.cluster == cluster_id], 
+            x='date', y='casualties'
+        )
+
+    scatter_geographic = px.scatter_mapbox(df_clean[df_clean.cluster == cluster_id], lat="latitude", lon="longitude", zoom=5,
+                           mapbox_style="light")
+    scatter_geographic.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
+    scatter_geographic.update_layout(showlegend=False)
+
+    cluster_text = 'Cluster number: ' + str(cluster_id)
+    # print('cluster number: ' + str(cluster_id))
+
+    return [scatter_timeline, scatter_geographic, cluster_text]
 
 ######################################################
 ################ Socioeconomic charts ################
@@ -424,7 +474,6 @@ def update_se_graph_variables(selected_country, primary_yaxis, secondary_yaxis, 
     return fig
 
 if __name__ == '__main__':
-    app.run_server(debug=False, port=3007) 
+    app.run_server(debug=True, port=3007) 
 
-# open your web browser and go to : http://127.0.0.1:8050/
 # if you want to see the dashboard in action   # Drop cols
