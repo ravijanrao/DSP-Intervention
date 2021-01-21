@@ -22,9 +22,10 @@ from plotly.subplots import make_subplots
 from scipy.cluster.hierarchy import fcluster
 
 # import variables from separate data processing file
-from data_preparation import generate_conflict_dict
+from data_preparation import generate_conflict_dict, generate_relevant_entries_dict
 
 conflict_dict = generate_conflict_dict()
+relevant_entries_dict = generate_relevant_entries_dict()
 
 app = dash.Dash(__name__)
 
@@ -66,7 +67,33 @@ app.layout = html.Div(
                     options=[{"label": i, "value": i} for i in country_code_dict],
                     value="Afghanistan"
                 ),
-                html.P("Additional text explaning the conflict.")
+                html.Div(
+                    children = [
+                        html.H5("Basic Summary"),
+                            dcc.Markdown(
+                            id = "basic-summary",
+                            children = "Additional information summarizing the intervention."
+                            ),
+                    ]
+                ),
+                html.Div(
+                    children = [
+                        html.H5("Description of approval/motivations:"),
+                        dcc.Markdown(
+                            id = "approval-motivations",
+                            children = "Additional information capturing the motivations/approval of the intervention."
+                            ),
+                    ]
+                ),
+                html.Div(
+                    children = [
+                        html.H5("Basic Intervention Characteristics:"),
+                        dcc.Markdown(
+                            id = "intervention-characteristics",
+                            children = "Basic intervention characteristics."
+                            ),
+                    ]
+                ),
             ]
         ), 
 
@@ -122,13 +149,6 @@ app.layout = html.Div(
             ]
         ),
 
-        #     style={
-        #         "borderBottom": "thin lightgrey solid",
-        #         "backgroundColor": "rgb(250, 250, 250)",
-        #         "padding": "10px 5px",
-        #         "width": "49%",
-        #     },
-        # ),
         #################### SOCIOECONOMIC ELEMENTS ####################
 
         html.Div(
@@ -190,6 +210,57 @@ app.layout = html.Div(
         ),
     ], className="grid-container"
 )
+
+#########################################################
+################### Sidebar Elements ####################
+#########################################################
+
+@app.callback(
+    Output("basic-summary", "children"),
+    Input("selected-country", "value")
+)
+def update_basic_summary(selected_country):
+    country = country_code_dict[selected_country]
+    hmi_df = conflict_dict[country]['hmi_df']
+    relevant_entries = ['HMISTART', 'HMIEND', 'TARGET', 'INTERVEN1', 'INTERVEN2', 'INTERVEN3']
+    text = ""
+    for entry in relevant_entries:
+        if(hmi_df[entry] != -88):
+            text += '\n**{}**\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
+
+    return text
+
+@app.callback(
+    Output("approval-motivations", "children"),
+    Input("selected-country", "value")
+)
+def update_approval_motivations(selected_country):
+    country = country_code_dict[selected_country]
+    hmi_df = conflict_dict[country]['hmi_df']
+    relevant_entries = ['ISSUE', 'UNSC', 'REGIOORG', 'GOVTPERM', 'CONTRA4', 'CONTRA5']
+    text = ""
+    for entry in relevant_entries:
+        if(hmi_df[entry] != -88):
+            text += '\n**{}**\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
+
+    return text
+
+@app.callback(
+    Output("intervention-characteristics", "children"),
+    Input("selected-country", "value")
+)
+def update_intervention_characteristics(selected_country):
+    country = country_code_dict[selected_country]
+    hmi_df = conflict_dict[country]['hmi_df']
+    relevant_entries = ['TATROOP', 'GROUNDFO', 'GROUNDNO', 'ACTIVE', 'FORCE']
+    text = ""
+    for entry in relevant_entries:
+        if(hmi_df[entry] != -88):
+            text += '\n**{}**\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
+
+    return text
+
+
 
 #########################################################
 #################### Conflict charts ####################
