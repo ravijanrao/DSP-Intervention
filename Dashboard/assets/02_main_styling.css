@@ -20,11 +20,16 @@ p {
 
 .grid-container {
     display: grid;
-    box-sizing: border-box;
-    grid-template-areas:    "side map map"  
-                            "side  country-overview country-overview"  
-                            "side 3d-scatter st-knox" 
-                            "side  se-factors se-factors";
+    /* box-sizing: border-box; */
+    width: 100%;
+    grid-template-columns: 1fr 5fr;
+    grid-template-areas:    "side map"  
+                            "side  country-overview"  
+                            "side 3d-scatter"
+                            "side cluster-scatter-timeline"
+                            "side cluster-scatter-geographic"
+                            "side st-knox" 
+                            "side se-factors";
 }
 
 .grid-item {

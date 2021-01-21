@@ -148,6 +148,22 @@ app.layout = html.Div(
                 dcc.Graph(id="3d-scatter-plot"),
             ]
         ),
+        html.Div(
+            className="grid-item grid-graph-component",
+            style={"grid-area": "cluster-scatter-timeline"},
+            children=[
+                html.H4("Cluster Over Time"),
+                dcc.Graph(id="cluster-scatter-timeline"),
+            ]
+        ),
+            html.Div(
+            className="grid-item grid-graph-component",
+            style={"grid-area": "cluster-scatter-geographic"},
+            children=[
+                html.H4("Cluster in Space"),
+                dcc.Graph(id="cluster-scatter-geographic"),
+            ]
+        ),
 
         #################### SOCIOECONOMIC ELEMENTS ####################
 
@@ -324,7 +340,7 @@ def update_conflict_graph(selected_country, chart_type, yaxis_type):
 
     return fig
 
-#### 3d chart ####
+#### 3d cluster chart ####
 #### NEEDS TO BE UPDATED TO ALLOW FOR CHANGE OF SETTING! #####
 @app.callback(
     Output("3d-scatter-plot", "figure"),
@@ -360,12 +376,9 @@ def update_3d_graph(selected_country, cutoff_value):
             'date': True
         }
     )
-
-    # fig.update_layout(margin={'l': 40, 'b': 40, 't': 0, 'r': 0})
-#     fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest',
-#     transition_duration=500) # transition is quite buggy
-
     return fig
+
+
 
 ######################################################
 ################ Socioeconomic charts ################
