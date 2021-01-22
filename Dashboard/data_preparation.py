@@ -52,7 +52,7 @@ def generate_conflict_dict():
         conflict_dict[country]['se_df'] = se_df
 
         # Linkage matrices
-        linkage_path = PATH.joinpath('Linkage_Matrices').joinpath(country) # relevant linkage matrix folder
+        linkage_path = PATH.joinpath(r'Production Data/Linkage_Matrices').joinpath(country) # relevant linkage matrix folder
 
         setting_dict = {
             '1': '_pure_spatial.npy',

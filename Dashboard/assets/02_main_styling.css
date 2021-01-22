@@ -1,4 +1,4 @@
-@import url("https://use.typekit.net/our4hzl.css");
+@import url("https://github.com/IBM/plex/raw/master/IBM-Plex-Sans/fonts/complete/ttf/IBMPlexSans-Regular.ttf");
 
 html {
     /* background: #e2e1e0; */
@@ -47,15 +47,16 @@ p {
 .grid-container {
     display: grid;
     width: 100%;
-    grid-template-columns: 1fr 5fr;
+    grid-template-columns: 350px 1fr;
     /* box-sizing: border-box; */
-    grid-template-areas:    "side map" 
-                            "side country-overview"  
+    grid-template-areas:    "side country-overview"  
+                            "side cluster-scatter-geographic"
                             "side scatter"
                             "side cluster-scatter-timeline"
-                            "side cluster-scatter-geographic"
+                            
                             "side st-knox" 
-                            "side se-factors";
+                            "side se-factors"
+                            "side map";
 }
 
 .grid-item {
@@ -67,24 +68,37 @@ p {
     transition: all 0.3s cubic-bezier(.25,.8,.25,1);
 }
 
-.grid-graph-container, .grid-text-container {
+.grid-graph-component,
+.grid-text-component {
     padding: 1.4em;
 }
 
-.grid-map-container {
+.grid-map-component {
     padding: 0;
 }
 
-.logos-container {
+.logos-component {
     border-top: 1px solid lightgrey;
     margin-top: 50px;
     padding: 2em;
     position: fixed;
     bottom: 0;
 }
-.logos-container > img {
+
+.logos-component > img {
     margin-left: auto;
     margin-right: auto;
     display: block;
     max-width: 150px;
+}
+
+/* Set text on maps to overlay */
+.overlay-text {
+    z-index: 99;
+    margin: 1.4em;
+    padding: .1em .1em;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: rgba(255,255,255,1);
 }

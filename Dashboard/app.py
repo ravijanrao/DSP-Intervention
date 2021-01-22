@@ -26,6 +26,12 @@ from data_preparation import generate_conflict_dict, generate_relevant_entries_d
 
 conflict_dict = generate_conflict_dict()
 relevant_entries_dict = generate_relevant_entries_dict()
+# Load knox tables data
+with open(r'Production Data/Knox tables/knox_tables.pickle', 'rb') as handle:
+    knox_data = pickle.load(handle)
+
+mapbox_access_token = 'pk.eyJ1IjoidGVzY2hvdXRlbiIsImEiOiJja2s0M2t0cGkxaDdkMnZycnh3MnJmN2ttIn0.ftu0gggzcawisWSA2KV6kw'
+px.set_mapbox_access_token(mapbox_access_token)
 
 app = dash.Dash(__name__)
 
@@ -57,19 +63,19 @@ app.layout = html.Div(
     [
         # The sidebar div
         html.Div(
-            className="grid-item grid-sidebar",
+            className="grid-item grid-text-component grid-text-sidebar",
             style={"grid-area": "side"},
             children=[
                 html.H2("[DSP dashboard concept]"), 
                 html.Label("Select conflict"),
                 dcc.Dropdown(
                     id="selected-country",
-                    options=[{"label": i, "value": i} for i in country_code_dict],
-                    value="Afghanistan"
+                    options=[{"label": k, "value": country_code_dict[k]} for k in country_code_dict],
+                    value="AFG"
                 ),
                 html.Div(
                     children = [
-                        html.H5("Basic Summary"),
+                        html.H3("Basic Summary"),
                             dcc.Markdown(
                             id = "basic-summary",
                             children = "Additional information summarizing the intervention."
@@ -78,7 +84,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children = [
-                        html.H5("Description of approval/motivations:"),
+                        html.H3("Description of approval/motivations:"),
                         dcc.Markdown(
                             id = "approval-motivations",
                             children = "Additional information capturing the motivations/approval of the intervention."
@@ -87,7 +93,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children = [
-                        html.H5("Basic Intervention Characteristics:"),
+                        html.H3("Basic Intervention Characteristics:"),
                         dcc.Markdown(
                             id = "intervention-characteristics",
                             children = "Basic intervention characteristics."
@@ -97,13 +103,13 @@ app.layout = html.Div(
             ]
         ), 
 
-        html.Div(
-            className="grid-item grid-graph-component",
-            style={"grid-area": "map"},
-            children=[
-                dcc.Graph(id="main-map")
-            ]
-        ),       
+        # html.Div(
+        #     className="grid-item grid-map-component",
+        #     style={"grid-area": "map"},
+        #     children=[
+        #         dcc.Graph(id="main-map")
+        #     ]
+        # ),       
         
         # Bubble chart component
         html.Div(
@@ -141,19 +147,28 @@ app.layout = html.Div(
             style={"grid-area": "3d-scatter"},
             children=[
                 html.H4("Space-time clustering"),
-                html.Label("Select spatial vs. temporal weighting for cluster generation:"),
-                dcc.Slider(
-                    id="cluster-weighting",
-                    min=1,
-                    max=5,
-                    marks = {i: str(i) for i in range(1,6)},
-                    value=3
-                ),
+                html.Div(className="side-by-side-input", children=[
+                    html.Div(
+                        [html.Label("Select spatial vs. temporal weighting for cluster generation:"),
+                        dcc.Slider(
+                            id="cluster-weighting",
+                            min=1,
+                            max=5,
+                            marks = {i: str(i) for i in range(1,6)},
+                            value=3)]
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Select cluster size:"),
+                            dcc.Slider(
+                                id="cluster-size-slider", min=0, max=0.6, step=0.02, value=0.16
+                            )
+                        ]
+                    )
+                ]),
+                
                 dcc.Graph(id="3d-scatter-plot"),
-                html.Label("Select cluster size:"),
-                dcc.Slider(
-                    id="cluster-size-slider", min=0, max=0.6, step=0.02, value=0.16
-                ),
+                
             ]
         ),
         html.Div(
@@ -166,10 +181,10 @@ app.layout = html.Div(
             ]
         ),
             html.Div(
-            className="grid-item grid-graph-component",
+            className="grid-item grid-map-component",
             style={"grid-area": "cluster-scatter-geographic"},
             children=[
-                html.H4("Cluster in Space"),
+                html.H4("Cluster in Space", className="overlay-text"),
                 dcc.Graph(id="cluster-scatter-geographic"),
             ]
         ),
@@ -228,11 +243,12 @@ app.layout = html.Div(
 
         html.Div(
             className="grid-item grid-graph-component",
-            style={"grid-area": "st-knox"},
+            style={"gridArea": "st-knox"},
             children=[
-                html.H4("Space-time contingency tables")
+                html.H4("Space-time contingency tables"),
+                dcc.Graph(id="st-knox-tables")
             ]
-        ),
+        )
     ], className="grid-container"
 )
 
@@ -244,14 +260,13 @@ app.layout = html.Div(
     Output("basic-summary", "children"),
     Input("selected-country", "value")
 )
-def update_basic_summary(selected_country):
-    country = country_code_dict[selected_country]
+def update_basic_summary(country):
     hmi_df = conflict_dict[country]['hmi_df']
     relevant_entries = ['HMISTART', 'HMIEND', 'TARGET', 'INTERVEN1', 'INTERVEN2', 'INTERVEN3']
     text = ""
     for entry in relevant_entries:
         if(hmi_df[entry] != -88):
-            text += '\n**{}**\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
+            text += '\n#### {}\n\n{}\n'.format(relevant_entries_dict[entry], hmi_df[entry])
 
     return text
 
@@ -259,8 +274,7 @@ def update_basic_summary(selected_country):
     Output("approval-motivations", "children"),
     Input("selected-country", "value")
 )
-def update_approval_motivations(selected_country):
-    country = country_code_dict[selected_country]
+def update_approval_motivations(country):
     hmi_df = conflict_dict[country]['hmi_df']
     relevant_entries = ['ISSUE', 'UNSC', 'REGIOORG', 'GOVTPERM', 'CONTRA4', 'CONTRA5']
     text = ""
@@ -274,8 +288,7 @@ def update_approval_motivations(selected_country):
     Output("intervention-characteristics", "children"),
     Input("selected-country", "value")
 )
-def update_intervention_characteristics(selected_country):
-    country = country_code_dict[selected_country]
+def update_intervention_characteristics(country):
     hmi_df = conflict_dict[country]['hmi_df']
     relevant_entries = ['TATROOP', 'GROUNDFO', 'GROUNDNO', 'ACTIVE', 'FORCE']
     text = ""
@@ -291,22 +304,22 @@ def update_intervention_characteristics(selected_country):
 #################### Conflict charts ####################
 #########################################################
 
-@app.callback(
-    Output("main-map", "figure"),
-    Input("selected-country", "value")
-)
-def update_map(selected_country):
-    url = 'https://raw.githubusercontent.com/kefeimo/DataScienceBlog/master/2.geo_plot/df_mapbox_demo.csv'
-    df_plot_tmp = pd.read_csv(url)
-    mapbox_access_token =  'pk.eyJ1IjoidGVzY2hvdXRlbiIsImEiOiJja2s0M2t0cGkxaDdkMnZycnh3MnJmN2ttIn0.ftu0gggzcawisWSA2KV6kw'
-    px.set_mapbox_access_token(mapbox_access_token)
-    fig = px.scatter_mapbox(df_plot_tmp, lat="latitude", lon="longitude", color="gender", zoom=3,
-                           mapbox_style="light")
+# @app.callback(
+#     Output("main-map", "figure"),
+#     Input("selected-country", "value")
+# )
+# def update_map(scountry):
+#     url = 'https://raw.githubusercontent.com/kefeimo/DataScienceBlog/master/2.geo_plot/df_mapbox_demo.csv'
+#     df_plot_tmp = pd.read_csv(url)
+#     mapbox_access_token =  'pk.eyJ1IjoidGVzY2hvdXRlbiIsImEiOiJja2s0M2t0cGkxaDdkMnZycnh3MnJmN2ttIn0.ftu0gggzcawisWSA2KV6kw'
+#     px.set_mapbox_access_token(mapbox_access_token)
+#     fig = px.scatter_mapbox(df_plot_tmp, lat="latitude", lon="longitude", color="gender", zoom=3,
+#                            mapbox_style="light")
 
-    fig.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
-    fig.update_layout(showlegend=False)
+#     fig.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
+#     fig.update_layout(showlegend=False)
 
-    return fig
+#     return fig
 
 #### Standard conflict charts ####
 @app.callback(
@@ -315,9 +328,8 @@ def update_map(selected_country):
     Input("chart-type", "value"),
     Input("yaxis-type", "value"),
 )
-def update_conflict_graph(selected_country, chart_type, yaxis_type):
+def update_conflict_graph(country, chart_type, yaxis_type):
     # create the bubble plot
-    country = country_code_dict[selected_country]
     if chart_type == available_charts[0]:
         fig = px.scatter(
             conflict_dict[country]["monthly_casualties_df"],
@@ -357,9 +369,7 @@ def update_conflict_graph(selected_country, chart_type, yaxis_type):
     Input("cluster-weighting", "value"),
     Input("cluster-size-slider", "value"),
 )
-def update_3d_graph(selected_country, cluster_weighting, cutoff_value):
-    country = country_code_dict[selected_country]
-
+def update_3d_graph(country, cluster_weighting, cutoff_value):
      # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
@@ -377,12 +387,17 @@ def update_3d_graph(selected_country, cluster_weighting, cutoff_value):
     linkage_matrix = conflict_dict[country]['linkage'][str(cluster_weighting)]
  
     df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
+    df_clean['c-str'] = df_clean['cluster'].apply(str)
 
     #create the full scatter plot
     full_scatter_plot = px.scatter_3d(df_clean, 
-        x='latitude', y='longitude', z='days_from_earliest',
+        x='latitude',
+        y='longitude',
+        z='days_from_earliest',
         color="cluster",
+        # symbol="c-str",
         hover_data = {
+            'cluster': True,
             'side_a': True,
             'side_b': True,
             'date': True
@@ -400,8 +415,7 @@ def update_3d_graph(selected_country, cluster_weighting, cutoff_value):
     Input("cluster-size-slider", "value"),
     Input('3d-scatter-plot', 'clickData'),
 )
-def update_cluster_charts(selected_country, cluster_weighting, cutoff_value, clickData, ):
-    country = country_code_dict[selected_country]
+def update_cluster_charts(country, cluster_weighting, cutoff_value, clickData):
     df_clean = conflict_dict[country]['conflict_df'].loc[:,['date_start', 'best', 'latitude', 'longitude', 'side_a', 'side_b']]
     df_clean['date'] = pd.to_datetime(df_clean['date_start'])
     df_clean = df_clean.rename(columns={"best": "casualties"})
@@ -411,17 +425,25 @@ def update_cluster_charts(selected_country, cluster_weighting, cutoff_value, cli
     df_clean['cluster'] = fcluster(linkage_matrix, cutoff_value, criterion = 'distance')
 
     # create the time chart
-    if(clickData):
+    if (clickData):
         cluster_id = clickData['points'][0]['marker.color']
+        df = df_clean[df_clean.cluster == cluster_id]
     else:
-        cluster_id = 1
+        cluster_id = '*'
+        df = df_clean
 
-    scatter_timeline = px.scatter(df_clean[df_clean.cluster == cluster_id], 
+    scatter_timeline = px.scatter(df, 
             x='date', y='casualties'
         )
 
-    scatter_geographic = px.scatter_mapbox(df_clean[df_clean.cluster == cluster_id], lat="latitude", lon="longitude", zoom=5,
-                           mapbox_style="light")
+    #print(df_clean[df_clean.cluster == cluster_id])
+    scatter_geographic = px.scatter_mapbox(df,
+                                            lat="latitude",
+                                            lon="longitude",
+                                            zoom=5,
+                                            size="casualties",
+                                            mapbox_style="light"
+                                            )
     scatter_geographic.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
     scatter_geographic.update_layout(showlegend=False)
 
@@ -441,10 +463,8 @@ def update_cluster_charts(selected_country, cluster_weighting, cutoff_value, cli
     Input('secondary-yaxis', 'value'),
     Input('indicator-range', 'value')
 )
-def update_se_graph_variables(selected_country, primary_yaxis, secondary_yaxis, indicator_range):
+def update_se_graph_variables(country, primary_yaxis, secondary_yaxis, indicator_range):
     
-    country = country_code_dict[selected_country]
-
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # dataframe limited to the year range
@@ -473,7 +493,52 @@ def update_se_graph_variables(selected_country, primary_yaxis, secondary_yaxis, 
     
     return fig
 
+######################################################
+################ ST Contingency table ################
+######################################################
+
+@app.callback(
+    Output("st-knox-tables", "figure"),
+    Input("selected-country", "value")
+)
+def update_knox_tables(country):
+    # Fetch data
+    df_dur = knox_data[country]['During']
+    df_pri = None#knox_data[country]['Prior']
+    df_aft = knox_data[country]['After']
+
+    fig = make_subplots(rows=1, cols=3,
+                        shared_xaxes=True,
+                        shared_yaxes=True,
+                        start_cell='top-left',
+                        subplot_titles=['Prior to HMI', 'During HMI', 'After HMI'],
+                        x_title="Distance (km) →",
+                        y_title="Timedifference (days) →")
+
+    for i, df in enumerate([df_pri, df_dur, df_aft]):
+        if isinstance(df, pd.DataFrame):
+            z=df.values.tolist()
+            x=df.columns.tolist()
+            y=df.index.tolist()
+        else:
+            z = None
+            x = df_dur.columns.tolist()
+            y = df_dur.index.tolist()
+
+        fig.add_trace(
+            go.Heatmap(
+                    z=z, x=x, y=y,
+                    zmin=.75, zmax=1.75, 
+                    colorbar=dict(title='Title'),
+                    colorscale="viridis"
+            ),            
+            row=1,
+            col=i+1
+        )
+
+    return fig
+
 if __name__ == '__main__':
-    app.run_server(debug=True, port=3007) 
+    app.run_server(debug=False, port=3007) 
 
 # if you want to see the dashboard in action   # Drop cols
