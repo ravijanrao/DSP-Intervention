@@ -50,9 +50,10 @@ p {
     grid-template-columns: 1fr 5fr;
     /* box-sizing: border-box; */
     grid-template-areas:    "side map" 
-                            "side nieuweComponent" 
                             "side country-overview"  
                             "side scatter"
+                            "side cluster-scatter-timeline"
+                            "side cluster-scatter-geographic"
                             "side st-knox" 
                             "side se-factors";
 }
