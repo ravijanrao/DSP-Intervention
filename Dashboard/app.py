@@ -26,6 +26,7 @@ from data_preparation import generate_conflict_dict, generate_relevant_entries_d
 
 conflict_dict = generate_conflict_dict()
 relevant_entries_dict = generate_relevant_entries_dict()
+
 # Load knox tables data
 with open(r'Production Data/Knox tables/knox_tables.pickle', 'rb') as handle:
     knox_data = pickle.load(handle)
@@ -298,29 +299,6 @@ def update_intervention_characteristics(country):
 
     return text
 
-
-
-#########################################################
-#################### Conflict charts ####################
-#########################################################
-
-# @app.callback(
-#     Output("main-map", "figure"),
-#     Input("selected-country", "value")
-# )
-# def update_map(scountry):
-#     url = 'https://raw.githubusercontent.com/kefeimo/DataScienceBlog/master/2.geo_plot/df_mapbox_demo.csv'
-#     df_plot_tmp = pd.read_csv(url)
-#     mapbox_access_token =  'pk.eyJ1IjoidGVzY2hvdXRlbiIsImEiOiJja2s0M2t0cGkxaDdkMnZycnh3MnJmN2ttIn0.ftu0gggzcawisWSA2KV6kw'
-#     px.set_mapbox_access_token(mapbox_access_token)
-#     fig = px.scatter_mapbox(df_plot_tmp, lat="latitude", lon="longitude", color="gender", zoom=3,
-#                            mapbox_style="light")
-
-#     fig.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
-#     fig.update_layout(showlegend=False)
-
-#     return fig
-
 #### Standard conflict charts ####
 @app.callback(
     Output("selected-chart", "figure"),
@@ -539,6 +517,6 @@ def update_knox_tables(country):
     return fig
 
 if __name__ == '__main__':
-    app.run_server(debug=False, port=3007) 
+    app.run_server(debug=True, port=3007) 
 
 # if you want to see the dashboard in action   # Drop cols
