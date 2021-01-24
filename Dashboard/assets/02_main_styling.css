@@ -53,13 +53,13 @@ p {
                             "side cluster-scatter-geographic"
                             "side scatter"
                             "side cluster-scatter-timeline"
-                            
                             "side st-knox" 
                             "side se-factors"
                             "side map";
 }
 
 .grid-item {
+    min-width: 0;
     background: #fff;
     border-radius: 2px;
     margin: 5px;
