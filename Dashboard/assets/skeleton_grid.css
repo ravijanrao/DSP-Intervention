@@ -1,42 +1,7 @@
-@import url("https://github.com/IBM/plex/raw/master/IBM-Plex-Sans/fonts/complete/ttf/IBMPlexSans-Regular.ttf");
-
 html {
     /* background: #e2e1e0; */
-    background: #F3F8FF;
-    color: #103462;
-}
-
-body {
-    font-size: 16px;
-    font-family: IBM Plex Sans, sans-serif; 
-}
-
-p {
-    margin: 1em 0;
-}
-
-h1, h2, h3, h4 {
-    font-weight: 600;
-}
-
-h1 {
-    font-size: 4em;
-}
-
-h2 {
-    font-size: 3em;
-}
-
-h3 {
-    font-size: 2em;
-}
-
-h4 {
-    font-size: 1.2em;
-}
-
-p {
-    font-size: 1em;
+    background: #f8fbff;
+    color: #001a33;
 }
 
 /* 
@@ -47,6 +12,7 @@ p {
 .grid-container {
     display: grid;
     width: 100%;
+    max-width: 1500px;
     grid-template-columns: 350px 1fr;
     /* box-sizing: border-box; */
     grid-template-areas:    "side country-overview"  
