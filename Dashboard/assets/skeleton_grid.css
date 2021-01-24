@@ -1,0 +1,70 @@
+html {
+    /* background: #e2e1e0; */
+    background: #f8fbff;
+    color: #001a33;
+}
+
+/* 
+  Grid layout 
+  specifics
+*/
+
+.grid-container {
+    display: grid;
+    width: 100%;
+    max-width: 1500px;
+    grid-template-columns: 350px 1fr;
+    /* box-sizing: border-box; */
+    grid-template-areas:    "side country-overview"  
+                            "side cluster-scatter-geographic"
+                            "side scatter"
+                            "side cluster-scatter-timeline"
+                            "side st-knox" 
+                            "side se-factors"
+                            "side map";
+}
+
+.grid-item {
+    min-width: 0;
+    background: #fff;
+    border-radius: 2px;
+    margin: 5px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.grid-graph-component,
+.grid-text-component {
+    padding: 1.4em;
+}
+
+.grid-map-component {
+    padding: 0;
+}
+
+.logos-component {
+    border-top: 1px solid lightgrey;
+    margin-top: 50px;
+    padding: 2em;
+    position: fixed;
+    bottom: 0;
+}
+
+.logos-component > img {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    max-width: 150px;
+}
+
+/* Set text on maps to overlay */
+.overlay-text {
+    z-index: 99;
+    margin: 1.4em;
+    padding: .1em .1em;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: rgba(255,255,255,1);
+}
