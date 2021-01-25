@@ -182,6 +182,17 @@ app.layout = html.Div(
                 ),
                 dcc.Graph(id="3d-scatter-plot"),
             ],
+
+                html.Label("Select cluster size:"),
+                dcc.Slider(
+                    id="cluster-size-slider", min=0.02, max=0.4, step=0.02, value=0.16,
+                    marks = {
+                        0.02: 'Small cluster separation distance',
+                        0.4: 'Large cluster separation distance'
+                    }
+                ),
+            ]
+
         ),
         html.Div(
             className="grid-item grid-graph-component",
@@ -483,9 +494,13 @@ def update_cluster_charts(country, cluster_weighting, cutoff_value, clickData):
     )
     scatter_geographic.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
     scatter_geographic.update_layout(showlegend=False)
-
-    cluster_text = "Cluster number: " + str(cluster_id)
-    # print('cluster number: ' + str(cluster_id))
+            
+    cluster_text = "Cluster number: {}\n\n Number of points: {}\n\n Average casualties per conflict: {}\n\n Standard deviation of casualties per conflict: {}".format(
+            str(cluster_id),
+            str(len(df_clean[df_clean.cluster == cluster_id])), 
+            str(df_clean[df_clean.cluster == cluster_id].casualties.mean()),
+            str(df_clean[df_clean.cluster == cluster_id].casualties.std())
+        )
 
     return [scatter_timeline, scatter_geographic, cluster_text]
 
