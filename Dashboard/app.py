@@ -460,9 +460,11 @@ def update_cluster_charts(country, cluster_weighting, cutoff_value, clickData):
     linkage_matrix = conflict_dict[country]["linkage"][str(cluster_weighting)]
     df_clean["cluster"] = fcluster(linkage_matrix, cutoff_value, criterion="distance")
 
+    
     # create the time chart
     if clickData:
-        cluster_id = clickData["points"][0]["marker.color"]
+        # print(int())
+        cluster_id = int(clickData["points"][0]['customdata'][0])
         df = df_clean[df_clean.cluster == cluster_id]
     else:
         cluster_id = "*"
