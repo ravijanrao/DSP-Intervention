@@ -157,6 +157,9 @@ app.layout = html.Div(
                                 html.Label(
                                     "Select spatial vs. temporal weighting for cluster generation:"
                                 ),
+                                dcc.Markdown(
+                                    "*(1: pure spatial, 3: medium-spatial medium-temporal, 5: pure temporal)*"
+                                ),
                                 dcc.Slider(
                                     id="cluster-weighting",
                                     min=1,
@@ -168,16 +171,23 @@ app.layout = html.Div(
                         ),
                         html.Div(
                             [
-                                html.Label("Select cluster size:"),
+                                html.Label("Select number of clusters:"),
+                                dcc.Markdown(
+                                    id = "cluster-number-text",
+                                    children = ["Number of clusters: "]
+                                ),
                                 dcc.Slider(
-                                    id="cluster-size-slider",
-                                    min=0.02,
-                                    max=0.4,
-                                    step=0.02,
-                                    value=0.16,
+                                    id="cluster-number-slider",
+                                    min=1,
+                                    max=40,
+                                    step=1,
+                                    value=10,
                                     marks = {
-                                        0.02: 'Small cluster separation distance',
-                                        0.4: 'Large cluster separation distance'
+                                        1: '1',
+                                        10: '10',
+                                        20: '20',
+                                        30: '30',
+                                        40: '40'
                                     }
                                 ),
                             ]
@@ -193,7 +203,7 @@ app.layout = html.Div(
             style={"grid-area": "cluster-scatter-timeline"},
             children=[
                 html.H4("Cluster Over Time"),
-                html.Label(children="Cluster number: 1", id="cluster-number"),
+                dcc.Markdown(children="Cluster number: 1", id="cluster-number"),
                 dcc.Graph(id="cluster-scatter-timeline"),
             ],
         ),
@@ -400,9 +410,9 @@ def update_conflict_graph(country, chart_type, yaxis_type):
     Output("3d-scatter-plot", "figure"),
     Input("selected-country", "value"),
     Input("cluster-weighting", "value"),
-    Input("cluster-size-slider", "value"),
+    Input("cluster-number-slider", "value"),
 )
-def update_3d_graph(country, cluster_weighting, cutoff_value):
+def update_3d_graph(country, cluster_weighting, n_clusters):
     # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]["conflict_df"].loc[
@@ -415,13 +425,10 @@ def update_3d_graph(country, cluster_weighting, cutoff_value):
     first_date = df_clean["date"].min()
     df_clean["days_from_earliest"] = (df_clean["date"] - first_date).dt.days
 
-    # Rename cols
-    # df_clean = df_clean.rename(columns={"latitude": "lat", "longitude": "lon"})
-
     # grab relevant linkage matrix
     linkage_matrix = conflict_dict[country]["linkage"][str(cluster_weighting)]
 
-    df_clean["c"] = fcluster(linkage_matrix, cutoff_value, criterion="distance")
+    df_clean["c"] = fcluster(linkage_matrix, n_clusters, criterion="maxclust")
     df_clean["Cluster"] = df_clean["c"].apply(str)
 
     # create the full scatter plot
@@ -448,13 +455,14 @@ def update_3d_graph(country, cluster_weighting, cutoff_value):
 @app.callback(
     Output("cluster-scatter-timeline", "figure"),
     Output("cluster-scatter-geographic", "figure"),
+    Output("cluster-number-text", "children"),
     Output("cluster-number", "children"),
     Input("selected-country", "value"),
     Input("cluster-weighting", "value"),
-    Input("cluster-size-slider", "value"),
+    Input("cluster-number-slider", "value"),
     Input("3d-scatter-plot", "clickData"),
 )
-def update_cluster_charts(country, cluster_weighting, cutoff_value, clickData):
+def update_cluster_charts(country, cluster_weighting, n_clusters, clickData):
     df_clean = conflict_dict[country]["conflict_df"].loc[
         :, ["date_start", "best", "latitude", "longitude", "side_a", "side_b"]
     ]
@@ -463,7 +471,7 @@ def update_cluster_charts(country, cluster_weighting, cutoff_value, clickData):
 
     # grab relevant linkage matrix
     linkage_matrix = conflict_dict[country]["linkage"][str(cluster_weighting)]
-    df_clean["cluster"] = fcluster(linkage_matrix, cutoff_value, criterion="distance")
+    df_clean["cluster"] = fcluster(linkage_matrix, n_clusters, criterion="maxclust")
 
     
     # create the time chart
@@ -489,14 +497,22 @@ def update_cluster_charts(country, cluster_weighting, cutoff_value, clickData):
     scatter_geographic.update_layout(autosize=False, margin=dict(t=0, b=0, l=0, r=0))
     scatter_geographic.update_layout(showlegend=False)
             
-    cluster_text = "Cluster number: {}\n\n Number of points: {}\n\n Average casualties per conflict: {}\n\n Standard deviation of casualties per conflict: {}".format(
+    cluster_number_text = "**{}** clusters generated".format(n_clusters)
+
+    cluster_text = """
+    Cluster number: **{}**\n
+    | Number of points | Avg. cas. per event | Stdev. of cas. per event |
+    | --:-- | --:-- |  --:-- |
+    |   {}  |   {}  |   {}   |
+    """.format(
             str(cluster_id),
             str(len(df_clean[df_clean.cluster == cluster_id])), 
             str(df_clean[df_clean.cluster == cluster_id].casualties.mean()),
             str(df_clean[df_clean.cluster == cluster_id].casualties.std())
         )
 
-    return [scatter_timeline, scatter_geographic, cluster_text]
+
+    return [scatter_timeline, scatter_geographic, cluster_number_text, cluster_text]
 
 
 ######################################################
