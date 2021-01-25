@@ -171,10 +171,14 @@ app.layout = html.Div(
                                 html.Label("Select cluster size:"),
                                 dcc.Slider(
                                     id="cluster-size-slider",
-                                    min=0,
-                                    max=0.6,
+                                    min=0.02,
+                                    max=0.4,
                                     step=0.02,
                                     value=0.16,
+                                    marks = {
+                                        0.02: 'Small cluster separation distance',
+                                        0.4: 'Large cluster separation distance'
+                                    }
                                 ),
                             ]
                         ),
@@ -182,17 +186,7 @@ app.layout = html.Div(
                 ),
                 dcc.Graph(id="3d-scatter-plot"),
             ],
-
-                html.Label("Select cluster size:"),
-                dcc.Slider(
-                    id="cluster-size-slider", min=0.02, max=0.4, step=0.02, value=0.16,
-                    marks = {
-                        0.02: 'Small cluster separation distance',
-                        0.4: 'Large cluster separation distance'
-                    }
-                ),
-            ]
-
+            
         ),
         html.Div(
             className="grid-item grid-graph-component",
