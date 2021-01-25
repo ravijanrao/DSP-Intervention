@@ -8,7 +8,6 @@ def main():
 
     # Change cwd to the pickles folder
     os.chdir('./Raw Data/Knox_Pickles')
-    cwd = os.getcwd()
 
     output_dict = {
         "AFG": {
