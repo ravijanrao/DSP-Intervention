@@ -1,5 +1,6 @@
 # Import required libraries
 import pickle
+from math import log
 import copy
 import pathlib
 import urllib.request
@@ -264,10 +265,9 @@ app.layout = html.Div(
     className="grid-container",
 )
 
-#########################################################
-################### Sidebar Elements ####################
-#########################################################
-
+######################################################
+# Sidebar elements
+######################################################
 
 @app.callback(Output("basic-summary", "children"), Input("selected-country", "value"))
 def update_basic_summary(country):
@@ -323,7 +323,10 @@ def update_intervention_characteristics(country):
     return text
 
 
-#### Standard conflict charts ####
+######################################################
+# Base conflict events/severity scatterplot
+######################################################
+
 @app.callback(
     Output("selected-chart", "figure"),
     Input("selected-country", "value"),
@@ -355,33 +358,39 @@ def update_conflict_graph(country, chart_type, yaxis_type):
         margin={"l": 40, "b": 40, "t": 10, "r": 0},
         hovermode="closest",
         transition_duration=500,
-    )  # transition is quite buggy
-
+    )
     fig.update_yaxes(
         title="Number of recorded events per month",
+        range=[0, max] if yaxis_type == "Linear" else [0, log(max)],
         type="linear" if yaxis_type == "Linear" else "log",
     )
 
-    # Add start HMI annotation
-    fig.add_annotation(
-        x=dt.datetime(2000, 5, 17),
-        y=0,
-        ax=dt.datetime(2000, 5, 17),  # arrows' tail
-        ay=max,
-        text="Start HMI",
-        showarrow=True,
-        # textposition="Top center",
-        xref="x",
-        yref="y",
-        axref="x",
-        ayref="y",
-    )
+    # for x in 
+    start = dict(txt='Start HMI', date=conflict_dict[country]["hmi_df"]["HMISTART"])
+    end = dict(txt='End Hmi', date=conflict_dict[country]["hmi_df"]["HMIEND"])
+
+    for d in [start, end]:
+        fig.add_annotation(
+            x=d['date'],
+            y=0,
+            ax=d['date'],  # arrows' tail
+            ay=max if yaxis_type == "Linear" else log(max),
+            text=d['txt'],
+            showarrow=True,
+            # textposition="Top center",
+            xref="x",
+            yref="y",
+            axref="x",
+            ayref="y",
+        )
 
     return fig
 
 
-#### 3d cluster chart ####
-#### NEEDS TO BE UPDATED TO ALLOW FOR CHANGE OF SETTING! #####
+######################################################
+# 3D scatterplot clusters
+######################################################
+
 @app.callback(
     Output("3d-scatter-plot", "figure"),
     Input("selected-country", "value"),
@@ -427,7 +436,10 @@ def update_3d_graph(country, cluster_weighting, cutoff_value):
     return full_scatter_plot
 
 
-# updating the time and geographic scatter plot of the selected cluster
+######################################################
+# Update time & Geographic scatter plot of selected cl
+######################################################
+
 @app.callback(
     Output("cluster-scatter-timeline", "figure"),
     Output("cluster-scatter-geographic", "figure"),
@@ -477,9 +489,8 @@ def update_cluster_charts(country, cluster_weighting, cutoff_value, clickData):
 
 
 ######################################################
-################ Socioeconomic charts ################
+# Socioeconomic charts
 ######################################################
-
 
 @app.callback(
     Output("indicator-chart", "figure"),
@@ -526,9 +537,8 @@ def update_se_graph_variables(country, primary_yaxis, secondary_yaxis, indicator
 
 
 ######################################################
-################ ST Contingency table ################
+# ST Contingency / Knox Correlation Tables 
 ######################################################
-
 
 @app.callback(Output("st-knox-tables", "figure"), Input("selected-country", "value"))
 def update_knox_tables(country):
@@ -579,5 +589,3 @@ def update_knox_tables(country):
 
 if __name__ == "__main__":
     app.run_server(debug=False, port=3008)
-
-# if you want to see the dashboard in action   # Drop cols
