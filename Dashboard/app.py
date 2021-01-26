@@ -27,6 +27,7 @@ import wbdata as wb
 
 # import variables from separate data processing file
 from data_preparation import generate_conflict_dict, generate_relevant_entries_dict, generate_se_indicators_dict
+from sidebar_generator import sidebar_generator
 
 conflict_dict = generate_conflict_dict() #dict containing conflict dataframes
 relevant_entries_dict = generate_relevant_entries_dict() #dict of conflict descriptors
@@ -74,33 +75,9 @@ app.layout = html.Div(
                     ],
                     value="AFG",
                 ),
-                html.Div(
-                    children=[
-                        html.H3("Basic Summary"),
-                        dcc.Markdown(
-                            id="basic-summary",
-                            children="Additional information summarizing the intervention.",
-                        ),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.H3("Description of approval/motivations:"),
-                        dcc.Markdown(
-                            id="approval-motivations",
-                            children="Additional information capturing the motivations/approval of the intervention.",
-                        ),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.H3("Basic Intervention Characteristics:"),
-                        dcc.Markdown(
-                            id="intervention-characteristics",
-                            children="Basic intervention characteristics.",
-                        ),
-                    ]
-                ),
+                html.Div(id="sidebar-summary",
+                    children="",
+                )
             ],
         ),
         # html.Div(
@@ -153,7 +130,7 @@ app.layout = html.Div(
                                 html.Label(
                                     "Select spatial vs. temporal weighting for cluster generation:"
                                 ),
-                                dcc.Markdown(
+                                html.P(
                                     "*(1: pure spatial, 3: medium-spatial medium-temporal, 5: pure temporal)*"
                                 ),
                                 dcc.Slider(
@@ -191,6 +168,13 @@ app.layout = html.Div(
                     ],
                 ),
                 dcc.Graph(id="3d-scatter-plot"),
+                dcc.Checklist(
+                    id="showOrHideHMIPlanes",
+                        options=[
+                            {'label': 'Show Start/End HMI', 'value': 'show'}
+                        ],
+                        value=[]
+                    )  
             ],
             
         ),
@@ -251,11 +235,18 @@ app.layout = html.Div(
             ],
         ),
         html.Div(
-            className="grid-item grid-graph-component grid-st-component",
+            className="grid-item grid-st-component",
             style={"gridArea": "st-knox"},
             children=[
                 html.H4("Space-time contingency tables"),
-                dcc.Graph(id="st-knox-tables"),
+
+                # Not so pretty workaround to get the boxes squared
+                html.Div(className="fixed-ratio-box", children=[
+                    html.Div(className="fixed-ratio-inside", children=[
+                        dcc.Graph(id="st-knox-tables", style={'height': 'inherit'})
+                        ]
+                    )
+                ]),
             ],
         ),
     ],
@@ -266,59 +257,15 @@ app.layout = html.Div(
 # Sidebar elements
 ######################################################
 
-@app.callback(Output("basic-summary", "children"), Input("selected-country", "value"))
-def update_basic_summary(country):
-    hmi_df = conflict_dict[country]["hmi_df"]
-    relevant_entries = [
-        "HMISTART",
-        "HMIEND",
-        "TARGET",
-        "INTERVEN1",
-        "INTERVEN2",
-        "INTERVEN3",
-    ]
-    text = ""
-    for entry in relevant_entries:
-        if hmi_df[entry] != -88:
-            text += "\n#### {}\n\n{}\n".format(
-                relevant_entries_dict[entry], hmi_df[entry]
-            )
-
-    return text
-
-
 @app.callback(
-    Output("approval-motivations", "children"), Input("selected-country", "value")
+        Output('sidebar-summary', 'children'),
+        Input('selected-country', 'value')
 )
-def update_approval_motivations(country):
-    hmi_df = conflict_dict[country]["hmi_df"]
-    relevant_entries = ["ISSUE", "UNSC", "REGIOORG", "GOVTPERM", "CONTRA4", "CONTRA5"]
-    text = ""
-    for entry in relevant_entries:
-        if hmi_df[entry] != -88:
-            text += "\n**{}**\n\n{}\n".format(
-                relevant_entries_dict[entry], hmi_df[entry]
-            )
-
-    return text
-
-
-@app.callback(
-    Output("intervention-characteristics", "children"),
-    Input("selected-country", "value"),
-)
-def update_intervention_characteristics(country):
-    hmi_df = conflict_dict[country]["hmi_df"]
-    relevant_entries = ["TATROOP", "GROUNDFO", "GROUNDNO", "ACTIVE", "FORCE"]
-    text = ""
-    for entry in relevant_entries:
-        if hmi_df[entry] != -88:
-            text += "\n**{}**\n\n{}\n".format(
-                relevant_entries_dict[entry], hmi_df[entry]
-            )
-
-    return text
-
+def update_sidebar(country):
+    #http://www.humanitarian-military-interventions.com/wp-content/uploads/2019/08/PRIF-data-set-HMI-codebook-v1-14.pdf
+    df = conflict_dict[country]["hmi_df"].to_dict()
+    sb = sidebar_generator(df)
+    return sb
 
 ######################################################
 # Base conflict events/severity scatterplot
@@ -393,8 +340,9 @@ def update_conflict_graph(country, chart_type, yaxis_type):
     Input("selected-country", "value"),
     Input("cluster-weighting", "value"),
     Input("cluster-number-slider", "value"),
+    Input("showOrHideHMIPlanes", "value")
 )
-def update_3d_graph(country, cluster_weighting, n_clusters):
+def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
     # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]["conflict_df"].loc[
@@ -431,17 +379,23 @@ def update_3d_graph(country, cluster_weighting, n_clusters):
         hover_data={"Cluster": True, "side_a": True, "side_b": True, "date": True},
     )
 
-    x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
-    y = pd.Series([df_clean['longitude'].min(), df_clean['longitude'].max(), df_clean['longitude'].max(), df_clean['longitude'].max()])
-    
-    z_start = hmi_start * np.ones((4,4))
-    z_end = hmi_end * np.ones((4,4))
+    if show_hide_planes == ['show']:
+        x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
+        y = pd.Series([df_clean['longitude'].min(), df_clean['longitude'].max(), df_clean['longitude'].max(), df_clean['longitude'].max()])
+        
+        z_start = hmi_start * np.ones((4,4))
+        z_end = hmi_end * np.ones((4,4))
 
-    full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_start, showscale = False, name="Start Intervention"))
-    if(conflict_dict[country]["hmi_df"]["HMIEND"]):
-        full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_end, showscale = False, name="End Intervention"))
+        cSurface = np.zeros(shape=z_start.shape)    
+        cScale = [[0, 'rgba(0,0,0)'], 
+                [1, 'rgba(0,0,0)']]
+
+        full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_start, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale=False, name="Start Intervention"))
+        if(conflict_dict[country]["hmi_df"]["HMIEND"]):
+            full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_end, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale = False, name="End Intervention"))
 
     full_scatter_plot.update_layout(margin=dict(l=30, r=20, b=30, t=20, pad=4))
+    
     return full_scatter_plot
 
 
