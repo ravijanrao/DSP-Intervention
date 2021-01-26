@@ -23,12 +23,15 @@ from plotly.subplots import make_subplots
 
 from scipy.cluster.hierarchy import fcluster
 
+import wbdata as wb
+
 # import variables from separate data processing file
-from data_preparation import generate_conflict_dict, generate_relevant_entries_dict
+from data_preparation import generate_conflict_dict, generate_relevant_entries_dict, generate_se_indicators_dict
 from sidebar_generator import sidebar_generator
 
-conflict_dict = generate_conflict_dict()
-relevant_entries_dict = generate_relevant_entries_dict()
+conflict_dict = generate_conflict_dict() #dict containing conflict dataframes
+relevant_entries_dict = generate_relevant_entries_dict() #dict of conflict descriptors
+all_se_options = generate_se_indicators_dict() # dict of all socioeconomic indicators
 
 # Load knox tables data
 with open(r"Production Data/Knox tables/knox_tables.pickle", "rb") as handle:
@@ -54,14 +57,6 @@ available_charts = [
     "Event severity over time dot plot",
     "Monthly fatalities scatter plot",
 ]
-
-# selectable socioeconomic parameters
-# available_indicators = se_df.columns[2:]
-available_indicators = conflict_dict["AFG"]["se_df"].columns[2:]
-
-# import the linkage matrix
-# linkage_matrix = get_linkage_matrix('Afghanistan', 3)
-# linkage_matrix = conflict_dict['AFG']['linkage']['3']
 
 app.layout = html.Div(
     [
@@ -205,52 +200,38 @@ app.layout = html.Div(
             className="grid-item grid-graph-component",
             style={"grid-area": "se-factors"},
             children=[
-                html.H4("Socioeconomic Factors"),
+                html.H4("Socioeconomic Indicators"),
                 html.Div(
                     className="side-by-side-input",
                     children=[
                         html.Div(
                             [
-                                html.H6("Primary axis variable"),
-                                dcc.Dropdown(
-                                    id="primary-yaxis",
-                                    options=[
-                                        {"label": i, "value": i}
-                                        for i in available_indicators
-                                    ],
-                                    value="GDP per capita (current US$)",
-                                ),
+                                html.H6("Select category"),
+                                html.Div(
+                                        dcc.Dropdown(
+                                            id="categories-dropdown",
+                                            options=[{'label': k, 'value': k} for k in all_se_options.keys()],
+                                            value="Demography"
+                                        )
+                                    )
                             ]
                         ),
                         html.Div(
-                            [
-                                html.H6("Secondary axis variable"),
-                                dcc.Dropdown(
-                                    id="secondary-yaxis",
-                                    options=[
-                                        {"label": i, "value": i}
-                                        for i in available_indicators
+                            children=[
+                                html.H6("Select indicator within the category"),
+                                html.Div(
+                                    children= [
+                                        dcc.Dropdown(
+                                                id="indicators-dropdown",
+                                                value = "Population, total"
+                                        )
                                     ],
-                                    value="Electoral democracy index (v2x_polyarchy)",
-                                ),
+                                )
                             ],
                         ),
                     ],
                 ),
                 dcc.Graph(id="indicator-chart"),
-                dcc.RangeSlider(
-                    id="indicator-range",
-                    min=conflict_df.year.min(),
-                    max=conflict_df.year.max(),
-                    step=1,
-                    value=[conflict_df.year.min(), conflict_df.year.max()],
-                    marks={
-                        value: str(value)
-                        for value in range(
-                            conflict_df.year.min(), conflict_df.year.max(), 2
-                        )
-                    },
-                ),
             ],
         ),
         html.Div(
@@ -402,7 +383,6 @@ def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
         x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
         y = pd.Series([df_clean['longitude'].min(), df_clean['longitude'].max(), df_clean['longitude'].max(), df_clean['longitude'].max()])
         
-        length_data = len(y)
         z_start = hmi_start * np.ones((4,4))
         z_end = hmi_end * np.ones((4,4))
 
@@ -413,8 +393,6 @@ def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
         full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_start, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale=False, name="Start Intervention"))
         if(conflict_dict[country]["hmi_df"]["HMIEND"]):
             full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_end, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale = False, name="End Intervention"))
-
-
 
     full_scatter_plot.update_layout(margin=dict(l=30, r=20, b=30, t=20, pad=4))
     
@@ -492,48 +470,46 @@ def update_cluster_charts(country, cluster_weighting, n_clusters, clickData):
 # Socioeconomic charts
 ######################################################
 
+# change selectable indicators based on selected category
 @app.callback(
-    Output("indicator-chart", "figure"),
-    Input("selected-country", "value"),
-    Input("primary-yaxis", "value"),
-    Input("secondary-yaxis", "value"),
-    Input("indicator-range", "value"),
+    Output('indicators-dropdown', 'options'),
+    Input('categories-dropdown', 'value'))
+def set_options(selected_category):
+    return [{'label': i, 'value': i} for i in all_se_options[selected_category]]
+
+# update selected indicator
+@app.callback(
+    Output('indicators-dropdown', 'value'),
+    Input('indicators-dropdown', 'options'))
+def set_value(available_options):
+    return available_options[0]['value']
+
+@app.callback(
+    Output('indicator-chart', 'figure'),
+    Input('selected-country', 'value'),
+    Input('indicators-dropdown', 'value'),
 )
-def update_se_graph_variables(country, primary_yaxis, secondary_yaxis, indicator_range):
+def update_se_graph_variables(selected_country, selected_indicator):
+    se_df = conflict_dict[selected_country]['se_df']
+    countries_to_hide_dict = {
+        "AFG": ["Pakistan", "Iran, Islamic Rep.", "Turkmenistan", "Uzbekistan", "Tajikistan"],
+        "IRQ": ["Iran, Islamic Rep.", "Syrian Arab Republic", "Jordan", "Turkey", "Saudi Arabia", "Kuwait"],
+        "SOM": ["Kenya", "Ethiopia", "Djibouti"],
+        "LKA": ["India", "Bangladesh", "Pakistan"]
+    }
+    
+    fig = px.line(se_df, # update this to the dict file path
+                x="Year",
+                y= selected_indicator,
+                color="Country")
+    
+    #As default, hide neighbouring countries
+    fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
+                    if trace.name in countries_to_hide_dict[selected_country] else ())
+    
+    fig.update_layout(transition_duration=500)
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-    # dataframe limited to the year range
-    se_df = conflict_dict[country]["se_df"]
-    dff = se_df[(se_df.Year >= indicator_range[0]) & (se_df.Year <= indicator_range[1])]
-
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"], y=dff[primary_yaxis], name=primary_yaxis, mode="lines"
-        ),
-        secondary_y=False,
-    )
-
-    fig.update_yaxes(title_text=primary_yaxis, secondary_y=False)
-
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"], y=dff[secondary_yaxis], name=secondary_yaxis, mode="lines"
-        ),
-        secondary_y=True,
-    )
-
-    fig.update_yaxes(title_text=secondary_yaxis, secondary_y=True)
-
-    fig.update_layout(
-        margin={"l": 40, "b": 40, "t": 10, "r": 0},
-        hovermode="closest",
-        legend_x=0.01,
-        legend_y=1,
-        transition_duration=500,
-    )
-
-    return fig
+    return fig   
 
 
 ######################################################
