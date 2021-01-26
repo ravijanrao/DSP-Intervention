@@ -57,9 +57,6 @@ available_charts = [
     "Monthly fatalities scatter plot",
 ]
 
-# selectable socioeconomic parameters
-available_indicators = conflict_dict["AFG"]["se_df"].columns[2:]
-
 app.layout = html.Div(
     [
         # The sidebar div
@@ -68,6 +65,15 @@ app.layout = html.Div(
             style={"grid-area": "side"},
             children=[
                 html.H2("[DSP dashboard concept]"),
+                html.Label("Select conflict"),
+                dcc.Dropdown(
+                    id="selected-country",
+                    options=[
+                        {"label": k, "value": country_code_dict[k]}
+                        for k in country_code_dict
+                    ],
+                    value="AFG",
+                ),
                 html.Div(
                     children=[
                         html.H3("Basic Summary"),
@@ -530,8 +536,7 @@ def set_value(available_options):
     Input('indicators-dropdown', 'value'),
 )
 def update_se_graph_variables(selected_country, selected_indicator):
-#     country = country_code_dict[selected_country]
-    se_df = conflict_df[selected_country]['se_df']
+    se_df = conflict_dict[selected_country]['se_df']
     countries_to_hide_dict = {
         "AFG": ["Pakistan", "Iran, Islamic Rep.", "Turkmenistan", "Uzbekistan", "Tajikistan"],
         "IRQ": ["Iran, Islamic Rep.", "Syrian Arab Republic", "Jordan", "Turkey", "Saudi Arabia", "Kuwait"],
