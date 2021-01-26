@@ -6,6 +6,7 @@ import pathlib
 import urllib.request
 
 import datetime as dt
+import numpy as np
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -425,6 +426,10 @@ def update_3d_graph(country, cluster_weighting, n_clusters):
     first_date = df_clean["date"].min()
     df_clean["days_from_earliest"] = (df_clean["date"] - first_date).dt.days
 
+    # Calculate location of start and end of hmi vs. earliest event
+    hmi_start = (pd.to_datetime(conflict_dict[country]["hmi_df"]["HMISTART"]) - first_date).days
+    hmi_end = (pd.to_datetime(conflict_dict[country]["hmi_df"]["HMIEND"]) - first_date).days
+
     # grab relevant linkage matrix
     linkage_matrix = conflict_dict[country]["linkage"][str(cluster_weighting)]
 
@@ -444,6 +449,18 @@ def update_3d_graph(country, cluster_weighting, n_clusters):
         # symbol="c-str",
         hover_data={"Cluster": True, "side_a": True, "side_b": True, "date": True},
     )
+
+    x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
+    y = pd.Series([df_clean['longitude'].min(), df_clean['longitude'].max(), df_clean['longitude'].max(), df_clean['longitude'].max()])
+    
+    length_data = len(y)
+    z_start = hmi_start * np.ones((4,4))
+    z_end = hmi_end * np.ones((4,4))
+
+    full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_start, showscale = False, name="Start Intervention"))
+    if(conflict_dict[country]["hmi_df"]["HMIEND"]):
+        full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_end, showscale = False, name="End Intervention"))
+
     full_scatter_plot.update_layout(margin=dict(l=30, r=20, b=30, t=20, pad=4))
     return full_scatter_plot
 
@@ -502,8 +519,8 @@ def update_cluster_charts(country, cluster_weighting, n_clusters, clickData):
     cluster_text = """
     Cluster number: **{}**\n
     | Number of points | Avg. cas. per event | Stdev. of cas. per event |
-    | --:-- | --:-- |  --:-- |
-    |   {}  |   {}  |   {}   |
+    |  :--: |  :--: |  :--: |
+    |   {}  |   {}  |   {}  |
     """.format(
             str(cluster_id),
             str(len(df_clean[df_clean.cluster == cluster_id])), 
