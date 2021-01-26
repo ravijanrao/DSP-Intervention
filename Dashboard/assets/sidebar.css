@@ -1,0 +1,61 @@
+.tiny-timeline {
+    /* height: 30px; */
+    display: flex;
+    justify-content: space-between;
+    padding: 0 3px;
+}
+
+.tiny-timeline .bold{
+    /* height: 30px; */
+    font-size: .8em;
+    font-weight: 600;
+}
+
+.timeline-left-dot,
+.timeline-right-dot{
+    flex-grow: 1;
+    border: 2px solid rgb(24, 24, 24);
+    height: 8px;
+    max-width: 8px;
+    border-radius: 22px;
+}
+
+.timeline-line {
+    align-self: center;
+    border-bottom: 4px dotted rgb(24, 24, 24);
+    flex-grow: 1;
+    height: 0px;
+    width: 30px;
+}
+
+.timeline-left-txt,
+.timeline-right-txt{
+    font-size: .8em;
+    font-weight: 400;
+    flex-grow: 1;
+}
+.timeline-left-txt{
+    text-align: left;
+}
+
+.timeline-right-txt{
+    text-align: right;
+}
+
+.timeline-fill {
+    flex-grow: 10;
+    height: 0px;
+}
+
+.intervener {
+    margin-right: 3px;
+    background-color: #f1f1f1;
+    padding: 0em .5em;
+}
+
+
+ul li {
+    margin: 0;
+    margin-left: 15px;
+    list-style-type: disc;
+  }
