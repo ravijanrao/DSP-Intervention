@@ -23,11 +23,14 @@ from plotly.subplots import make_subplots
 
 from scipy.cluster.hierarchy import fcluster
 
-# import variables from separate data processing file
-from data_preparation import generate_conflict_dict, generate_relevant_entries_dict
+import wbdata as wb
 
-conflict_dict = generate_conflict_dict()
-relevant_entries_dict = generate_relevant_entries_dict()
+# import variables from separate data processing file
+from data_preparation import generate_conflict_dict, generate_relevant_entries_dict, generate_se_indicators_dict
+
+conflict_dict = generate_conflict_dict() #dict containing conflict dataframes
+relevant_entries_dict = generate_relevant_entries_dict() #dict of conflict descriptors
+all_se_options
 
 # Load knox tables data
 with open(r"Production Data/Knox tables/knox_tables.pickle", "rb") as handle:
@@ -55,12 +58,7 @@ available_charts = [
 ]
 
 # selectable socioeconomic parameters
-# available_indicators = se_df.columns[2:]
 available_indicators = conflict_dict["AFG"]["se_df"].columns[2:]
-
-# import the linkage matrix
-# linkage_matrix = get_linkage_matrix('Afghanistan', 3)
-# linkage_matrix = conflict_dict['AFG']['linkage']['3']
 
 app.layout = html.Div(
     [
@@ -70,15 +68,6 @@ app.layout = html.Div(
             style={"grid-area": "side"},
             children=[
                 html.H2("[DSP dashboard concept]"),
-                html.Label("Select conflict"),
-                dcc.Dropdown(
-                    id="selected-country",
-                    options=[
-                        {"label": k, "value": country_code_dict[k]}
-                        for k in country_code_dict
-                    ],
-                    value="AFG",
-                ),
                 html.Div(
                     children=[
                         html.H3("Basic Summary"),
@@ -254,19 +243,6 @@ app.layout = html.Div(
                     ],
                 ),
                 dcc.Graph(id="indicator-chart"),
-                dcc.RangeSlider(
-                    id="indicator-range",
-                    min=conflict_df.year.min(),
-                    max=conflict_df.year.max(),
-                    step=1,
-                    value=[conflict_df.year.min(), conflict_df.year.max()],
-                    marks={
-                        value: str(value)
-                        for value in range(
-                            conflict_df.year.min(), conflict_df.year.max(), 2
-                        )
-                    },
-                ),
             ],
         ),
         html.Div(
