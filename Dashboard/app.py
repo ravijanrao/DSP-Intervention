@@ -210,34 +210,33 @@ app.layout = html.Div(
             className="grid-item grid-graph-component",
             style={"grid-area": "se-factors"},
             children=[
-                html.H4("Socioeconomic Factors"),
+                html.H4("Socioeconomic Indicators"),
                 html.Div(
                     className="side-by-side-input",
                     children=[
                         html.Div(
                             [
-                                html.H6("Primary axis variable"),
-                                dcc.Dropdown(
-                                    id="primary-yaxis",
-                                    options=[
-                                        {"label": i, "value": i}
-                                        for i in available_indicators
-                                    ],
-                                    value="GDP per capita (current US$)",
-                                ),
+                                html.H6("Select category"),
+                                html.Div(
+                                        dcc.Dropdown(
+                                            id="categories-dropdown",
+                                            options=[{'label': k, 'value': k} for k in all_se_options.keys()],
+                                            value="Demography"
+                                        )
+                                    )
                             ]
                         ),
                         html.Div(
-                            [
-                                html.H6("Secondary axis variable"),
-                                dcc.Dropdown(
-                                    id="secondary-yaxis",
-                                    options=[
-                                        {"label": i, "value": i}
-                                        for i in available_indicators
+                            children=[
+                                html.H6("Select indicator within the category"),
+                                html.Div(
+                                    children= [
+                                        dcc.Dropdown(
+                                                id="indicators-dropdown",
+                                                value = "Population, total"
+                                        )
                                     ],
-                                    value="Electoral democracy index (v2x_polyarchy)",
-                                ),
+                                )
                             ],
                         ),
                     ],
@@ -429,7 +428,6 @@ def update_3d_graph(country, cluster_weighting, n_clusters):
     x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
     y = pd.Series([df_clean['longitude'].min(), df_clean['longitude'].max(), df_clean['longitude'].max(), df_clean['longitude'].max()])
     
-    length_data = len(y)
     z_start = hmi_start * np.ones((4,4))
     z_end = hmi_end * np.ones((4,4))
 
@@ -512,48 +510,47 @@ def update_cluster_charts(country, cluster_weighting, n_clusters, clickData):
 # Socioeconomic charts
 ######################################################
 
+# change selectable indicators based on selected category
 @app.callback(
-    Output("indicator-chart", "figure"),
-    Input("selected-country", "value"),
-    Input("primary-yaxis", "value"),
-    Input("secondary-yaxis", "value"),
-    Input("indicator-range", "value"),
+    Output('indicators-dropdown', 'options'),
+    Input('categories-dropdown', 'value'))
+def set_options(selected_category):
+    return [{'label': i, 'value': i} for i in all_se_options[selected_category]]
+
+# update selected indicator
+@app.callback(
+    Output('indicators-dropdown', 'value'),
+    Input('indicators-dropdown', 'options'))
+def set_value(available_options):
+    return available_options[0]['value']
+
+@app.callback(
+    Output('indicator-chart', 'figure'),
+    Input('selected-country', 'value'),
+    Input('indicators-dropdown', 'value'),
 )
-def update_se_graph_variables(country, primary_yaxis, secondary_yaxis, indicator_range):
+def update_se_graph_variables(selected_country, selected_indicator):
+#     country = country_code_dict[selected_country]
+    se_df = conflict_df[selected_country]['se_df']
+    countries_to_hide_dict = {
+        "AFG": ["Pakistan", "Iran, Islamic Rep.", "Turkmenistan", "Uzbekistan", "Tajikistan"],
+        "IRQ": ["Iran, Islamic Rep.", "Syrian Arab Republic", "Jordan", "Turkey", "Saudi Arabia", "Kuwait"],
+        "SOM": ["Kenya", "Ethiopia", "Djibouti"],
+        "LKA": ["India", "Bangladesh", "Pakistan"]
+    }
+    
+    fig = px.line(se_df, # update this to the dict file path
+                x="Year",
+                y= selected_indicator,
+                color="Country")
+    
+    #As default, hide neighbouring countries
+    fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
+                    if trace.name in countries_to_hide_dict[selected_country] else ())
+    
+    fig.update_layout(transition_duration=500)
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-    # dataframe limited to the year range
-    se_df = conflict_dict[country]["se_df"]
-    dff = se_df[(se_df.Year >= indicator_range[0]) & (se_df.Year <= indicator_range[1])]
-
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"], y=dff[primary_yaxis], name=primary_yaxis, mode="lines"
-        ),
-        secondary_y=False,
-    )
-
-    fig.update_yaxes(title_text=primary_yaxis, secondary_y=False)
-
-    fig.add_trace(
-        go.Scatter(
-            x=dff["Year"], y=dff[secondary_yaxis], name=secondary_yaxis, mode="lines"
-        ),
-        secondary_y=True,
-    )
-
-    fig.update_yaxes(title_text=secondary_yaxis, secondary_y=True)
-
-    fig.update_layout(
-        margin={"l": 40, "b": 40, "t": 10, "r": 0},
-        hovermode="closest",
-        legend_x=0.01,
-        legend_y=1,
-        transition_duration=500,
-    )
-
-    return fig
+    return fig   
 
 
 ######################################################
