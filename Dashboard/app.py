@@ -25,6 +25,7 @@ from scipy.cluster.hierarchy import fcluster
 
 # import variables from separate data processing file
 from data_preparation import generate_conflict_dict, generate_relevant_entries_dict
+from sidebar_generator import sidebar_generator
 
 conflict_dict = generate_conflict_dict()
 relevant_entries_dict = generate_relevant_entries_dict()
@@ -79,33 +80,9 @@ app.layout = html.Div(
                     ],
                     value="AFG",
                 ),
-                html.Div(
-                    children=[
-                        html.H3("Basic Summary"),
-                        dcc.Markdown(
-                            id="basic-summary",
-                            children="Additional information summarizing the intervention.",
-                        ),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.H3("Description of approval/motivations:"),
-                        dcc.Markdown(
-                            id="approval-motivations",
-                            children="Additional information capturing the motivations/approval of the intervention.",
-                        ),
-                    ]
-                ),
-                html.Div(
-                    children=[
-                        html.H3("Basic Intervention Characteristics:"),
-                        dcc.Markdown(
-                            id="intervention-characteristics",
-                            children="Basic intervention characteristics.",
-                        ),
-                    ]
-                ),
+                html.Div(id="sidebar-summary",
+                    children="",
+                )
             ],
         ),
         # html.Div(
@@ -299,59 +276,15 @@ app.layout = html.Div(
 # Sidebar elements
 ######################################################
 
-@app.callback(Output("basic-summary", "children"), Input("selected-country", "value"))
-def update_basic_summary(country):
-    hmi_df = conflict_dict[country]["hmi_df"]
-    relevant_entries = [
-        "HMISTART",
-        "HMIEND",
-        "TARGET",
-        "INTERVEN1",
-        "INTERVEN2",
-        "INTERVEN3",
-    ]
-    text = ""
-    for entry in relevant_entries:
-        if hmi_df[entry] != -88:
-            text += "\n#### {}\n\n{}\n".format(
-                relevant_entries_dict[entry], hmi_df[entry]
-            )
-
-    return text
-
-
 @app.callback(
-    Output("approval-motivations", "children"), Input("selected-country", "value")
+        Output('sidebar-summary', 'children'),
+        Input('selected-country', 'value')
 )
-def update_approval_motivations(country):
-    hmi_df = conflict_dict[country]["hmi_df"]
-    relevant_entries = ["ISSUE", "UNSC", "REGIOORG", "GOVTPERM", "CONTRA4", "CONTRA5"]
-    text = ""
-    for entry in relevant_entries:
-        if hmi_df[entry] != -88:
-            text += "\n**{}**\n\n{}\n".format(
-                relevant_entries_dict[entry], hmi_df[entry]
-            )
-
-    return text
-
-
-@app.callback(
-    Output("intervention-characteristics", "children"),
-    Input("selected-country", "value"),
-)
-def update_intervention_characteristics(country):
-    hmi_df = conflict_dict[country]["hmi_df"]
-    relevant_entries = ["TATROOP", "GROUNDFO", "GROUNDNO", "ACTIVE", "FORCE"]
-    text = ""
-    for entry in relevant_entries:
-        if hmi_df[entry] != -88:
-            text += "\n**{}**\n\n{}\n".format(
-                relevant_entries_dict[entry], hmi_df[entry]
-            )
-
-    return text
-
+def update_sidebar(country):
+    #http://www.humanitarian-military-interventions.com/wp-content/uploads/2019/08/PRIF-data-set-HMI-codebook-v1-14.pdf
+    df = conflict_dict[country]["hmi_df"].to_dict()
+    sb = sidebar_generator(df)
+    return sb
 
 ######################################################
 # Base conflict events/severity scatterplot
@@ -429,7 +362,6 @@ def update_conflict_graph(country, chart_type, yaxis_type):
     Input("showOrHideHMIPlanes", "value")
 )
 def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
-    print(show_hide_planes)
     # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]["conflict_df"].loc[
