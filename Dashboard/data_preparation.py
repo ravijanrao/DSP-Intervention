@@ -142,7 +142,33 @@ def generate_relevant_entries_dict():
         'LOSSRATE': 'Losses in relation to the number of deployed ground forces',
         'NEWVIOL': 'Did a violent emergency occur in the target country within five years after the end of the intervention?',
         'NEWFATAL': 'Number of fatalities due to the new violent emergency',
-        'DISLOCATE': 'Are there indications that the intervention triggered violent emergencies or significantly exacerbated violent emergencies in neighboring countries? '
+        'DISLOCATE': 'Are there indications that the intervention triggered violent emergencies or significantly exacerbated violent emergencies in neighboring countries? ',
+        
+        # Dict providing interpretation of numerical values of certain outputs
+        'Translation': {
+                'STATUS':{
+                    0:'Without doubt, the intervention does not fulfill the criteria of a humanitarian military intervention, as there was no violent emergency or no use of force or no threat to use force or no declared intention of saving strangers or the declared intention of saving strangers was counteracted.',
+                    1:'There are doubts whether counteracting moves or motives were present. Alternatively, the intervention developed out of self-defense but no additional counteracting motives were given. If the violent emergency ends between the authorization of the intervention and troop deployment, it also counts as a borderline case.',
+                    2: 'The intervention fulfilled the criteria of a humanitarian military intervention, as there were a violent emergency and a use of force or the threat to use force and  the declared intention of saving strangers and the declared intention of saving strangers was not counteracted.'
+                },
+                'ENDTYPE':{
+                        0:'the intervention is ongoing at the time of coding',
+                        1:'end of violent emergency',
+                        2:'replacement by another humanitarian military intervention',
+                        3:'end of the humanitarian military intervention without a replacement by another while the emergency continued'
+                },
+                'ISSUE': {
+                    1:'terrritory',
+                    2:'government',
+                    3:'territory and government'
+                },
+                'NEWVIOL': {
+                    0:'the original emergency was ended and no new one occurred',
+                    1:'a new violent emergency occurred or the original emergency recurred',
+                    -88:'the item is not relevant, as the original emergency or the intervention was still ongoing or less than five years have passed after the intervention'
+  }
+
+        }
     }
     return relevant_entries_dict
         
