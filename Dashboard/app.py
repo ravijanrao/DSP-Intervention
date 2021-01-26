@@ -158,7 +158,7 @@ app.layout = html.Div(
                                 html.Label(
                                     "Select spatial vs. temporal weighting for cluster generation:"
                                 ),
-                                dcc.Markdown(
+                                html.P(
                                     "*(1: pure spatial, 3: medium-spatial medium-temporal, 5: pure temporal)*"
                                 ),
                                 dcc.Slider(
@@ -196,6 +196,13 @@ app.layout = html.Div(
                     ],
                 ),
                 dcc.Graph(id="3d-scatter-plot"),
+                dcc.Checklist(
+                    id="showOrHideHMIPlanes",
+                        options=[
+                            {'label': 'Show Start/End HMI', 'value': 'show'}
+                        ],
+                        value=[]
+                    )  
             ],
             
         ),
@@ -270,11 +277,18 @@ app.layout = html.Div(
             ],
         ),
         html.Div(
-            className="grid-item grid-graph-component grid-st-component",
+            className="grid-item grid-st-component",
             style={"gridArea": "st-knox"},
             children=[
                 html.H4("Space-time contingency tables"),
-                dcc.Graph(id="st-knox-tables"),
+
+                # Not so pretty workaround to get the boxes squared
+                html.Div(className="fixed-ratio-box", children=[
+                    html.Div(className="fixed-ratio-inside", children=[
+                        dcc.Graph(id="st-knox-tables", style={'height': 'inherit'})
+                        ]
+                    )
+                ]),
             ],
         ),
     ],
@@ -412,8 +426,10 @@ def update_conflict_graph(country, chart_type, yaxis_type):
     Input("selected-country", "value"),
     Input("cluster-weighting", "value"),
     Input("cluster-number-slider", "value"),
+    Input("showOrHideHMIPlanes", "value")
 )
-def update_3d_graph(country, cluster_weighting, n_clusters):
+def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
+    print(show_hide_planes)
     # Drop cols & create date instances
     # all of this data processing is not necessary unless we change country!
     df_clean = conflict_dict[country]["conflict_df"].loc[
@@ -450,18 +466,26 @@ def update_3d_graph(country, cluster_weighting, n_clusters):
         hover_data={"Cluster": True, "side_a": True, "side_b": True, "date": True},
     )
 
-    x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
-    y = pd.Series([df_clean['longitude'].min(), df_clean['longitude'].max(), df_clean['longitude'].max(), df_clean['longitude'].max()])
-    
-    length_data = len(y)
-    z_start = hmi_start * np.ones((4,4))
-    z_end = hmi_end * np.ones((4,4))
+    if show_hide_planes == ['show']:
+        x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
+        y = pd.Series([df_clean['longitude'].min(), df_clean['longitude'].max(), df_clean['longitude'].max(), df_clean['longitude'].max()])
+        
+        length_data = len(y)
+        z_start = hmi_start * np.ones((4,4))
+        z_end = hmi_end * np.ones((4,4))
 
-    full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_start, showscale = False, name="Start Intervention"))
-    if(conflict_dict[country]["hmi_df"]["HMIEND"]):
-        full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_end, showscale = False, name="End Intervention"))
+        cSurface = np.zeros(shape=z_start.shape)    
+        cScale = [[0, 'rgba(0,0,0)'], 
+                [1, 'rgba(0,0,0)']]
+
+        full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_start, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale=False, name="Start Intervention"))
+        if(conflict_dict[country]["hmi_df"]["HMIEND"]):
+            full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_end, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale = False, name="End Intervention"))
+
+
 
     full_scatter_plot.update_layout(margin=dict(l=30, r=20, b=30, t=20, pad=4))
+    
     return full_scatter_plot
 
 
