@@ -30,7 +30,7 @@ from data_preparation import generate_conflict_dict, generate_relevant_entries_d
 
 conflict_dict = generate_conflict_dict() #dict containing conflict dataframes
 relevant_entries_dict = generate_relevant_entries_dict() #dict of conflict descriptors
-all_se_options
+all_se_options = generate_se_indicators_dict() # dict of all socioeconomic indicators
 
 # Load knox tables data
 with open(r"Production Data/Knox tables/knox_tables.pickle", "rb") as handle:
