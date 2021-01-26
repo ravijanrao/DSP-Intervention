@@ -1,14 +1,13 @@
-console.log("Custom script loaded.")
-// if (!window.dash_clientside) {
-//     window.dash_clientside = {};
-// }
-// window.dash_clientside.clientside = {
-//     resize: function(value) {
-//         console.log("resizing..."); // for testing
-//         setTimeout(function() {
-//             window.dispatchEvent(new Event("resize"));
-//             console.log("fired resize");
-//         }, 500);
-//     return null;
-//     },
-// };
+// console.log("Custom script loaded.")
+
+
+// window.dash_clientside = Object.assign({}, window.dash_clientside, {
+//     clientside: {
+//         window_resized: function() {
+//             console.log("Window resized")
+//             const box = document.querySelector('.grid-st-component');
+//             let width = box.clientWidth;
+//             return someTransform(width);
+//         }
+//     }
+// });
