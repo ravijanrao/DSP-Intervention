@@ -12,7 +12,7 @@ html {
   display: grid;
   width: 100%;
   max-width: 1500px;
-  grid-template-columns: 330px 1fr;
+  grid-template-columns: 350px 1fr;
   /* box-sizing: border-box; */
   grid-template-areas:
     "side country-overview"

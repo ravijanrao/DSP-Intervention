@@ -147,14 +147,14 @@ def sidebar_generator(hmi):
     try:    
         hmi_end = hmi.get('HMIEND').strftime("%m/%d-%Y").split('-')
     except:
-        hmi_end = "ongoing"
+        hmi_end = ["ongoing", ""]
 
     
     c.append(html.Div(className="tiny-timeline", children=
         [
             html.Div(className="timeline-left-txt", children=[hmi_start[0],html.Br(), hmi_start[1]]),
             html.Div(className="timeline-fill"),
-            html.Div(className="timeline-right-txt", children=[hmi_end[0], html.Br(), hmi_start[1]])
+            html.Div(className="timeline-right-txt", children=[hmi_end[0], html.Br(), hmi_end[1]])
         ]
     ))
    
