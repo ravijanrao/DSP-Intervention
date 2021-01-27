@@ -65,7 +65,7 @@ app.layout = html.Div(
             className="grid-item grid-text-component grid-text-sidebar",
             style={"grid-area": "side"},
             children=[
-                html.H2("[DSP dashboard concept]"),
+                html.H2("[UVA x TNO HMI-VAST]"),
                 html.Label("Select conflict"),
                 dcc.Dropdown(
                     id="selected-country",
