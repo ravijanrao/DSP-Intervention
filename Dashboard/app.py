@@ -34,7 +34,7 @@ relevant_entries_dict = generate_relevant_entries_dict() #dict of conflict descr
 all_se_options = generate_se_indicators_dict() # dict of all socioeconomic indicators
 
 # Load knox tables data
-with open(r"Production Data/Knox tables/knox_tables.pickle", "rb") as handle:
+with open(r"Production Data/Knox tables/knox_tables_v3.pickle", "rb") as handle:
     knox_data = pickle.load(handle)
 
 mapbox_access_token = "pk.eyJ1IjoidGVzY2hvdXRlbiIsImEiOiJja2s0M2t0cGkxaDdkMnZycnh3MnJmN2ttIn0.ftu0gggzcawisWSA2KV6kw"
@@ -167,7 +167,8 @@ app.layout = html.Div(
                         ),
                     ],
                 ),
-                dcc.Graph(id="3d-scatter-plot"),
+                dcc.Graph(id="3d-scatter-plot", 
+                            style={'height': '40em'}),
                 dcc.Checklist(
                     id="showOrHideHMIPlanes",
                         options=[
@@ -239,6 +240,15 @@ app.layout = html.Div(
             style={"gridArea": "st-knox"},
             children=[
                 html.H4("Space-time contingency tables"),
+                # dcc.RadioItems(
+                #     id="st-resolution",
+                #         options=[
+                #             {'label': 'High resolution', 'value': 'Highres'},
+                #             {'label': 'Low resolution', 'value': 'Lowres'},
+                #         ],
+                #         value='Lowres',
+                #         labelStyle={'display': 'inline-block'}
+                #     ) , 
 
                 # Not so pretty workaround to get the boxes squared
                 html.Div(className="fixed-ratio-box", children=[
@@ -286,6 +296,7 @@ def update_conflict_graph(country, chart_type, yaxis_type):
             x="Month",
             y="events",
             size="marker_size",
+            # hover_template='%{y:.0f}days <br>'
             hover_name="Month",  # formatting becomes weird for the heading!
             hover_data={
                 "marker_size": False,
@@ -309,19 +320,18 @@ def update_conflict_graph(country, chart_type, yaxis_type):
         type="linear" if yaxis_type == "Linear" else "log",
     )
 
-    # for x in 
     start = dict(txt='Start HMI', date=conflict_dict[country]["hmi_df"]["HMISTART"])
     end = dict(txt='End Hmi', date=conflict_dict[country]["hmi_df"]["HMIEND"])
 
     for d in [start, end]:
+        if d['date'] == 0:
+            continue
         fig.add_annotation(
             x=d['date'],
             y=0,
             ax=d['date'],  # arrows' tail
             ay=max if yaxis_type == "Linear" else log(max),
             text=d['txt'],
-            showarrow=True,
-            # textposition="Top center",
             xref="x",
             yref="y",
             axref="x",
@@ -352,12 +362,12 @@ def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
     df_clean = df_clean.rename(columns={"best": "casualties"})
 
     # Calculate days from earliest event for faster comparison
-    first_date = df_clean["date"].min()
-    df_clean["days_from_earliest"] = (df_clean["date"] - first_date).dt.days
+    first_date = df_clean["date"].min() 
+    df_clean["years"] = (df_clean["date"] - first_date).dt.days / (365) 
 
     # Calculate location of start and end of hmi vs. earliest event
-    hmi_start = (pd.to_datetime(conflict_dict[country]["hmi_df"]["HMISTART"]) - first_date).days
-    hmi_end = (pd.to_datetime(conflict_dict[country]["hmi_df"]["HMIEND"]) - first_date).days
+    hmi_start = (pd.to_datetime(conflict_dict[country]["hmi_df"]["HMISTART"]) - first_date).days / (365) 
+    hmi_end = (pd.to_datetime(conflict_dict[country]["hmi_df"]["HMIEND"]) - first_date).days / (365) 
 
     # grab relevant linkage matrix
     linkage_matrix = conflict_dict[country]["linkage"][str(cluster_weighting)]
@@ -366,18 +376,24 @@ def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
     df_clean["Cluster"] = df_clean["c"].apply(str)
 
     # create the full scatter plot
-    full_scatter_plot = px.scatter_3d(
+    fig_3d = px.scatter_3d(
         df_clean,
         x="latitude",
         y="longitude",
-        z="days_from_earliest",
+        z="years",
         color="Cluster",
         opacity=0.9,
-        size_max=2,
-        # size=5,
-        # symbol="c-str",
+        size_max=1,
+        # '<br><b>X</b>: %{x}<br>'+
+        # '<b>%{text}</b>',
         hover_data={"Cluster": True, "side_a": True, "side_b": True, "date": True},
     )
+
+    # for fignum in range(len(fig_3d.data)):
+    #     fig_3d.data[fignum].update(hovertemplate=
+    #     '<b>Cluster</b> %{customdata[0]}'+
+    #     'Lat: %{x:.2f}, Lon: %{y:.2f}')
+
 
     if show_hide_planes == ['show']:
         x = pd.Series([df_clean['latitude'].min(), df_clean['latitude'].min(), df_clean['latitude'].max(), df_clean['latitude'].max()])
@@ -390,13 +406,14 @@ def update_3d_graph(country, cluster_weighting, n_clusters, show_hide_planes):
         cScale = [[0, 'rgba(0,0,0)'], 
                 [1, 'rgba(0,0,0)']]
 
-        full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_start, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale=False, name="Start Intervention"))
+        fig_3d.add_trace(go.Surface(x=x, y=y, z=z_start, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale=False, name="Start Intervention"))
         if(conflict_dict[country]["hmi_df"]["HMIEND"]):
-            full_scatter_plot.add_trace(go.Surface(x=x, y=y, z=z_end, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale = False, name="End Intervention"))
+            fig_3d.add_trace(go.Surface(x=x, y=y, z=z_end, opacity=.5, surfacecolor=cSurface, colorscale=cScale, showscale = False, name="End Intervention"))
 
-    full_scatter_plot.update_layout(margin=dict(l=30, r=20, b=30, t=20, pad=4))
-    
-    return full_scatter_plot
+    fig_3d.update_layout(margin=dict(l=30, r=20, b=30, t=20, pad=4))
+    fig_3d.update_layout(scene_aspectmode="cube")#_aspectratio=dict(x=2, y=2, z=1))
+
+    return fig_3d
 
 
 ######################################################
@@ -489,8 +506,8 @@ def set_value(available_options):
     Input('selected-country', 'value'),
     Input('indicators-dropdown', 'value'),
 )
-def update_se_graph_variables(selected_country, selected_indicator):
-    se_df = conflict_dict[selected_country]['se_df']
+def update_se_graph_variables(country, selected_indicator):
+    se_df = conflict_dict[country]['se_df']
     countries_to_hide_dict = {
         "AFG": ["Pakistan", "Iran, Islamic Rep.", "Turkmenistan", "Uzbekistan", "Tajikistan"],
         "IRQ": ["Iran, Islamic Rep.", "Syrian Arab Republic", "Jordan", "Turkey", "Saudi Arabia", "Kuwait"],
@@ -500,14 +517,59 @@ def update_se_graph_variables(selected_country, selected_indicator):
     
     fig = px.line(se_df, # update this to the dict file path
                 x="Year",
-                y= selected_indicator,
+                y=selected_indicator,
                 color="Country")
+
     
     #As default, hide neighbouring countries
     fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
-                    if trace.name in countries_to_hide_dict[selected_country] else ())
-    
+                    if trace.name in countries_to_hide_dict[country] else ())
+
+
+    mx = 0
+    for f in fig.data:
+        mxt = max(f['y'])
+        if mxt > mx:
+            mx = mxt
+
     fig.update_layout(transition_duration=500)
+
+
+    start_year = int(conflict_dict[country]["hmi_df"]["HMISTART"].strftime("%Y"))
+    start_month = int(conflict_dict[country]["hmi_df"]["HMISTART"].strftime("%m"))/11
+    start = dict(txt="Start HMI", date=start_year+start_month)
+
+    try: 
+        end_year = int(conflict_dict[country]["hmi_df"]["HMIEND"].strftime("%Y"))
+        end_month = int(conflict_dict[country]["hmi_df"]["HMIEND"].strftime("%m"))/11
+    except:
+        end_year = 0
+        end_month = 0
+    end = dict(txt="End HMI", date=end_year+end_month)
+        
+    
+
+    for d in [start, end]:
+        if d['date'] == 0:
+            continue
+        fig.add_annotation(
+            x=d['date'],
+            ax=d['date'], 
+            xref="x",
+            axref="x",
+
+            y=0,
+            ay=mx,
+            yref="y",
+            ayref="y",
+
+            text=d['txt'],
+            showarrow=True,
+            arrowwidth=1,          
+
+        )  
+
+        
 
     return fig   
 
@@ -517,11 +579,14 @@ def update_se_graph_variables(selected_country, selected_indicator):
 ######################################################
 
 @app.callback(Output("st-knox-tables", "figure"), Input("selected-country", "value"))
-def update_knox_tables(country):
+def update_knox_tables(country, resolution="Lowres"):
+    # print(country)
     # Fetch data
-    df_dur = knox_data[country]["During"]
-    df_pri = None  # knox_data[country]['Prior']
-    df_aft = knox_data[country]["After"]
+    df_dur = knox_data[country][resolution]["During"]
+    df_pri = knox_data[country][resolution]['Prior']
+    df_aft = knox_data[country][resolution]["After"]
+
+
 
     fig = make_subplots(
         # rows=0,
@@ -534,7 +599,7 @@ def update_knox_tables(country):
         y_title="Timedifference (days) →",
     )
 
-    fig.update_layout(margin=dict(l=30, r=20, b=30, t=20, pad=4))
+    fig.update_layout(margin=dict(l=60, r=20, b=60, t=20, pad=4))
 
     for i, df in enumerate([df_pri, df_dur, df_aft]):
         if isinstance(df, pd.DataFrame):
@@ -542,19 +607,29 @@ def update_knox_tables(country):
             x = df.columns.tolist()
             y = df.index.tolist()
         else:
-            z = None
-            x = df_dur.columns.tolist()
-            y = df_dur.index.tolist()
+            try:
+                z = None
+                x = df_dur.columns.tolist()
+                y = df_dur.index.tolist()
+            except:
+                z = None
+                x = df_aft.columns.tolist()
+                y = df_aft.index.tolist()
 
         fig.add_trace(
             go.Heatmap(
                 z=z,
                 x=x,
                 y=y,
-                zmin=0.75,
-                zmax=1.75,
-                colorbar=dict(title="Title"),
+                zmin=0.5,
+                zmax=2.5,
+                colorbar=dict(title="Ratio<br>observed/MC"),
                 colorscale="viridis",
+                hovertemplate='%{x:.0f} km <br>'+
+                                '%{y:.0f} days <br>'+
+                                '%{z:.2f} knox ratio'
+    #     '<br>Cluster</br> %{customdata[0]}'+
+    #     'Lat: %{x:.2f}, Lon: %{y:.2f}')
             ),
             row=1,
             col=i + 1,
@@ -564,4 +639,4 @@ def update_knox_tables(country):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False, port=3008)
+    app.run_server(debug=True, port=1228)
