@@ -1,8 +1,8 @@
 # DSP-Intervention
 
-A Humanitarian Military Intervention Analysis and Dashboard Project
+A Humanitarian Military Intervention Analysis and Dashboard Project. 
 
-### Run
+### Run application
 Select environment, then run the following command from the project **root** directory:
 
 ```sh
