@@ -10,7 +10,10 @@ $ python Dashboard/app.py
 ```
 
 ### Requirements
-The dashboard is developed to run on the latest version of python (3.9 at time of writing). The dependencies include:
+The dashboard is developed to run on the latest version of python (3.9 at time of writing). To install the required dependencies, there's two options.
+
+#### Manual installation
+Manually install the following dependencies:
 
 ```
 - dash
@@ -21,8 +24,8 @@ The dashboard is developed to run on the latest version of python (3.9 at time o
 - wbdata
 ```
 
+#### Installation via conda requirements yml
 A conda requirements file is included in the root dir. Creating the environment from the file is easily done by executing:
-
 ```sh
 $ conda create -n <environment-name> --file dependencies.yml
 ```
