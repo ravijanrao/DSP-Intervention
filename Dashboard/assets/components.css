@@ -4,57 +4,110 @@
 
 /* Map Container */
 #main-map {
-    height: 600px;
+  height: 600px;
 }
 
 .radio-input label {
-    display: inline-block;
+  display: inline-block;
 }
 
 .side-by-side-input {
-    display: flex;
-    align-items: flex-end;
-    margin: 1.6em 0;
+  display: flex;
+  align-items: flex-end;
+  margin: 1.6em 0;
 }
 
 .side-by-side-input > div {
-    flex: 1;
-    margin: 0 12px;
+  flex: 1;
+  margin: 0 12px;
 }
 
-
 .grid-text-sidebar h3 {
-    /* text-transform: uppercase; */
-    margin-top: 2em;
-    font-size: 1.2em;
+  /* text-transform: uppercase; */
+  margin-top: 2em;
+  font-size: 1.2em;
 }
 
 .grid-text-sidebar h4 {
-    margin: .7em 0em .1em 0em;
-    font-size: 1em;
+  margin: 0.7em 0em 0.1em 0em;
+  font-size: 1em;
 }
 
 .grid-text-sidebar p {
-    margin: 0;
-    font-size: .8em;
+  margin: 0;
+  font-size: 0.8em;
 }
 
 #indicator-range {
-    margin: 10px;
-    padding: 20px;
+  margin: 10px;
+  padding: 20px;
 }
 
 .fixedAspectRatio {
-    overflow: hidden;
-    height: 0;
-    padding-top: 20.25%;
-    /* background-color: red; */
+  overflow: hidden;
+  height: 0;
+  padding-top: 20.25%;
+  /* background-color: red; */
 }
 
 .fixedAspectRatioBoxInside {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+button {
+  background-color: white;
+  text-transform: capitalize;
+  padding: 0.2em;
+  margin: 0;
+  font-size: 0.7em;
+  font-weight: 400;
+}
+/* Style the button that is used to open and close the collapsible content */
+.collapsible {
+  /* background-color: #eee; */
+  cursor: pointer;
+
+  /* width: 100%; */
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+/* .active,
+.collapsible:hover {
+  background-color: #ccc;
+} */
+
+/* Style the collapsible content. Note: hidden by default */
+.content {
+  border-radius: 10px;
+  padding: 0.8em 1.6em;
+  font-size: 0.95em;
+  /* background-color: white; */
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+  margin-bottom: 1em;
+}
+
+.content > p {
+  margin-top: 0.5em;
+}
+
+.collapsible:after {
+  content: "\02795"; /* Unicode character for "plus" sign (+) */
+  font-size: 13px;
+  color: white;
+  float: right;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: "\2796"; /* Unicode character for "minus" sign (-) */
 }
