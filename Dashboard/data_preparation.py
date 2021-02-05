@@ -175,42 +175,33 @@ def generate_relevant_entries_dict():
 
 def generate_se_indicators_dict():
     all_indicator_options = {
-        'Demography': [
-            'Population, total', 
-            'Birth rate, crude (per 1,000 people)', 
-            'Death rate, crude (per 1,000 people)',
-            'Population density (people per sq. km of land area)'],
-        
-        'Economy': [
-            'GDP per capita (current US$)',
-            'Exports of goods and services (% of GDP)',
-            'Military expenditure (% of GDP)',
-            'Consumer price index (2010 = 100)',
-            'Food production index (2004-2006 = 100)',
-            'Current health expenditure (% of GDP)',
-            'GDP growth (annual %)',
-            'Military expenditure (% of general government expenditure)',
-            'Unemployment, youth total (% of total labor force ages 15-24) (modeled ILO estimate)',
-            'Current education expenditure, total (% of total expenditure in public institutions)',
-            'Unemployment, total (% of total labor force) (modeled ILO estimate)',
-            'Children in employment, total (% of children ages 7-14)',
-            'Armed forces personnel (% of total labor force)'
-        ],
-        
-        'Society': [
-            'People using safely managed drinking water services (% of population)',
-            'Life expectancy at birth, total (years)','People using at least basic sanitation services (% of population)',
-            'Women Business and the Law Index Score (scale 1-100)','Access to electricity (% of population)',
-            'Multidimensional poverty headcount ratio (% of total population)',
-            'Proportion of women subjected to physical and/or sexual violence in the last 12 months (% of women age 15-49)',
-            'Proportion of people living below 50 percent of median income (%)',
-            'Internally displaced persons, total displaced by conflict and violence (number of people)',
-            'Strength of legal rights index (0=weak to 12=strong)',
-            'Adequacy of social protection and labor programs (% of total welfare of beneficiary households)',
-            'Presence of peace keepers (number of troops, police, and military observers in mandate)',
-            'Adequacy of social safety net programs (% of total welfare of beneficiary households)'
-            ]
-        }
+    'Demography': ['Population, total', 'Birth rate, crude (per 1,000 people)', 'Death rate, crude (per 1,000 people)',
+                   'Population density (people per sq. km of land area)'],
+    
+    'Economy': ['GDP per capita (current US$)', 'GNI per capita, Atlas method (current US$)',
+'Exports of goods and services (% of GDP)','Military expenditure (% of GDP)',
+'Consumer price index (2010 = 100)','Food production index (2004-2006 = 100)','Current health expenditure (% of GDP)',
+'GDP growth (annual %)','Military expenditure (% of general government expenditure)',
+                'Unemployment, youth total (% of total labor force ages 15-24) (modeled ILO estimate)',
+'Current education expenditure, total (% of total expenditure in public institutions)',
+'Unemployment, total (% of total labor force) (modeled ILO estimate)',
+'Children in employment, total (% of children ages 7-14)',
+'Armed forces personnel (% of total labor force)'],
+    
+    'Society': ['People using safely managed drinking water services (% of population)',
+'School enrollment, primary (% gross)',
+'Life expectancy at birth, total (years)','People using at least basic sanitation services (% of population)',
+'Women Business and the Law Index Score (scale 1-100)','Access to electricity (% of population)',
+'Multidimensional poverty headcount ratio (% of total population)',
+'Proportion of women subjected to physical and/or sexual violence in the last 12 months (% of women age 15-49)',
+'Proportion of people living below 50 percent of median income (%)',
+'Internally displaced persons, total displaced by conflict and violence (number of people)',
+'Strength of legal rights index (0=weak to 12=strong)',
+'Adequacy of social protection and labor programs (% of total welfare of beneficiary households)',
+'Presence of peace keepers (number of troops, police, and military observers in mandate)',
+'Adequacy of social safety net programs (% of total welfare of beneficiary households)']
+}
+
     return all_indicator_options
 
 # define all of the methods used to create the pickles?
