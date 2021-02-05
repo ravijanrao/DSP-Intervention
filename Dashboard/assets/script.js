@@ -1,13 +1,18 @@
-// console.log("Custom script loaded.")
+window.addEventListener("load", function () {
+  var coll = document.getElementsByClassName("collapsible");
+  var i;
 
-
-// window.dash_clientside = Object.assign({}, window.dash_clientside, {
-//     clientside: {
-//         window_resized: function() {
-//             console.log("Window resized")
-//             const box = document.querySelector('.grid-st-component');
-//             let width = box.clientWidth;
-//             return someTransform(width);
-//         }
-//     }
-// });
+  for (i = 0; i < coll.length; i++) {
+    coll[i].addEventListener("click", function () {
+      this.classList.toggle("active");
+      var content = this.nextElementSibling;
+      if (content.style.maxHeight) {
+        content.style.maxHeight = null;
+        content.style.backgroundColor = "white";
+      } else {
+        content.style.maxHeight = content.scrollHeight + "px";
+        content.style.backgroundColor = "#F7FAFC";
+      }
+    });
+  }
+});
