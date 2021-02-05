@@ -122,6 +122,13 @@ app.layout = html.Div(
             style={"grid-area": "3d-scatter"},
             children=[
                 html.H4("Space-time clustering"),
+                 html.Button("About this chart", type="button", className="collapsible"),
+                html.Div(children=[
+                    html.P(
+                    '''
+                    This component clusters the conflict data of the country undergoing an HMI using the Hierarchical Clustering algorithm and plots it in an interactive 3-D chart. The top-left slider controls the emphasis on spatial distances versus temporal distances when clustering the data, and the slider on the right controls the number of clusters the algorithm generates. Clicking on any point in the 3-D chart will update the map above and the scatter plot below to show only the data of the specific cluster to which the clicked point belongs. Finally, the checkbox in the bottom-left of the 3-D chart component toggles the display of horizontal planes which indicate the start and the end of the HMI for the studied intervention.
+                    ''')
+                ], className="content"),
                 html.Div(
                     className="side-by-side-input",
                     children=[
@@ -240,16 +247,19 @@ app.layout = html.Div(
             style={"gridArea": "st-knox"},
             children=[
                 html.H4("Space-time contingency tables"),
-                # dcc.RadioItems(
-                #     id="st-resolution",
-                #         options=[
-                #             {'label': 'High resolution', 'value': 'Highres'},
-                #             {'label': 'Low resolution', 'value': 'Lowres'},
-                #         ],
-                #         value='Lowres',
-                #         labelStyle={'display': 'inline-block'}
-                #     ) , 
-
+                html.Button("About this chart", type="button", className="collapsible"),
+                html.Div(children=[
+                    html.P(
+                    '''
+                    These Knox tables compare the observed space-time correlations observed in event data, in terms of the time between different events, and the distances between different events. A higher Knox ratio for a given square (i.e. spatial and temporal distance between events) indicates a higher observed correlation at this scale than the expected value for a randomised, uncorrelated system. Thus a green or yellow color indicates that there is a strong space-time correlation between events separated by a certain spatial or temporal distance.
+                    '''),
+                    html.P(
+                        '''
+                        Note that some tables may be empty due to a lack of recorded conflict events before or after intervention.
+                        '''
+                    )
+                ], className="content"),
+               
                 # Not so pretty workaround to get the boxes squared
                 html.Div(className="fixed-ratio-box", children=[
                     html.Div(className="fixed-ratio-inside", children=[
@@ -639,4 +649,4 @@ def update_knox_tables(country, resolution="Lowres"):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True, port=1228)
+    app.run_server(port=1228)
