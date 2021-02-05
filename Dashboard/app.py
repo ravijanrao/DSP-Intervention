@@ -649,4 +649,4 @@ def update_knox_tables(country, resolution="Lowres"):
 
 
 if __name__ == "__main__":
-    app.run_server(port=1228)
+    app.run_server(debug=False, host='0.0.0.0', port=5000, use_reloader=True)
